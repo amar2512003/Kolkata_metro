@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kolkata Metro Route Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: #1e1b4b;
+            background-image: radial-gradient(circle, rgba(49, 46, 129, 0.7) 0%, #111827 70%);
+        }
+        svg text::selection { fill: #fff; background-color: #9333ea; }
+        .station-label { font-size: 14px; font-weight: 500; }
+        .glass-card {
+            background-color: rgba(30, 27, 75, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(76, 29, 149, 0.37);
+        }
+        #realMap { width: 100%; height: 600px; border-radius: 0.5rem; background: #1e1b4b; }
+        .view-toggle-btn { transition: all 0.2s ease; }
+        .view-toggle-btn.active { background: linear-gradient(to right, #9333ea, #db2777); color: white; }
+        .view-toggle-btn:not(.active) { background: rgba(30, 27, 75, 0.6); color: #a5b4fc; }
+        .metro-user-marker {
+            background: #22d3ee; border: 2px solid white; border-radius: 50%;
+            width: 14px; height: 14px; box-shadow: 0 0 8px 2px rgba(34, 211, 238, 0.8);
+        }
+        .leaflet-popup-content-wrapper { background: #1e1b4b; color: #e5e7eb; border-radius: 8px; }
+        .leaflet-popup-tip { background: #1e1b4b; }
+    </style>
+</head>
+<body class="text-gray-200">
+    <!-- Intro Screen -->
+    <div id="intro-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-indigo-950 transition-opacity duration-1000 ease-in-out">
+        <svg class="w-20 h-20 text-purple-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.5 12.5L12 11.5l-3.5 3V9.5h7v5zM8 8H6V6h2v2zm10 0h-2V6h2v2z"/></svg>
+        <h2 class="text-3xl font-bold text-white mt-4 animate-pulse">Kolkata Metro Guide</h2>
+        <p class="text-purple-300 mt-2">Loading Your Journey Planner...</p>
+    </div>
+
+    <div id="main-content" class="hidden">
+        <div class="container mx-auto p-4 md:p-6 min-h-screen flex flex-col items-center">
+            <!-- Header -->
+            <header class="w-full max-w-5xl text-center mb-6 md:mb-8">
+                <div class="flex items-center justify-center gap-3">
+                    <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">Kolkata Metro Guide</h1>
+                </div>
+            </header>
+    
+            <!-- Planner Card -->
+            <div class="glass-card rounded-xl p-6 w-full max-w-5xl mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 items-center">
+                    <!-- Start Station -->
+                    <div class="relative">
+                        <div class="flex items-center gap-4 bg-indigo-950/60 p-3 rounded-lg border border-purple-800/50">
+                            <div class="bg-purple-500/20 text-purple-400 p-2 rounded-full">
+                                 <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                            </div>
+                            <div class="w-full">
+                                <label for="startStation" class="block text-xs font-medium text-gray-400">STARTING FROM</label>
+                                <input type="text" id="startStation" placeholder="Search for a station..." class="w-full bg-transparent text-white text-lg font-medium focus:outline-none" autocomplete="off">
+                            </div>
+                        </div>
+                        <div id="startSuggestions" class="absolute z-10 w-full mt-1 bg-indigo-900 border border-purple-800/50 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden"></div>
+                    </div>
+                     <!-- End Station -->
+                    <div class="relative">
+                        <div class="flex items-center gap-4 bg-indigo-950/60 p-3 rounded-lg border border-purple-800/50">
+                            <div class="bg-pink-500/20 text-pink-400 p-2 rounded-full">
+                                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+                            </div>
+                            <div class="w-full">
+                                <label for="endStation" class="block text-xs font-medium text-gray-400">DESTINATION</label>
+                                 <input type="text" id="endStation" placeholder="Search for a station..." class="w-full bg-transparent text-white text-lg font-medium focus:outline-none" autocomplete="off">
+                            </div>
+                        </div>
+                         <div id="endSuggestions" class="absolute z-10 w-full mt-1 bg-indigo-900 border border-purple-800/50 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden"></div>
+                    </div>
+                </div>
+                 <!-- Find Route Button -->
+                <div class="mt-6">
+                    <button id="findRouteBtn" class="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-purple-400/50 transform hover:scale-[1.02] transition-all duration-300">
+                        <span>Show Route</span>
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                    </button>
+                </div>
+            </div>
+    
+            <!-- Map and Route Details Container -->
+            <div id="route-display" class="glass-card rounded-xl p-2 sm:p-4 w-full max-w-5xl">
+                <div class="flex items-center justify-end gap-3 mb-3 px-1 flex-wrap">
+                    <button id="locateMeBtn" class="view-toggle-btn text-sm font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
+                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+                        Find Nearest Station
+                    </button>
+                </div>
+                <div id="nearestStationResult" class="hidden text-sm text-center bg-indigo-950/60 border border-purple-800/50 rounded-lg p-3 mb-3 text-cyan-300"></div>
+                <!-- Real-world Leaflet map -->
+                <div id="realMapContainer" class="w-full">
+                    <div id="realMap"></div>
+                </div>
+                <!-- Route details text -->
+                <div id="routeDetails" class="mt-2 text-center p-2">
+                    <p class="text-gray-400 text-lg">Select your journey to see the route plan.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('load', () => {
+            const introScreen = document.getElementById('intro-screen');
+            const mainContent = document.getElementById('main-content');
+
+            setTimeout(() => {
+                introScreen.classList.add('opacity-0', 'pointer-events-none');
+                mainContent.classList.remove('hidden');
+                document.dispatchEvent(new Event('metroAppVisible'));
+            }, 2500); // 2.5-second intro
+        });
+
+        const metroData = {
+            blue: { name: 'Blue Line', color: '#3b82f6', stations: [ { id: 'dakshineswar', name: 'Dakshineshwar' }, { id: 'baranagar', name: 'Baranagar', interchange: ['pink'] }, { id: 'noapara', name: 'Noapara', interchange: ['yellow'] }, { id: 'dumdum', name: 'Dum Dum' }, { id: 'belgachia', name: 'Belgachia', gates: { "1": "Duttabagan Milk Colony", "2": "CTC (WBTC)", "3": "WB University of Animal & Fishery Sciences" } }, { id: 'shyambazar', name: 'Shyambazar', gates: { "1": "Shyambazar 5 point", "2": "RG Kar Medical College Hospital", "3": "MMC college", "4": "Bhupen Bose Avenue" } }, { id: 'shobhabazar', name: 'Shobhabazar Sutanuti', gates: { "1": "Aurobindo Sarani", "2": "Jaipuria College Gate", "3": "BK Paul Avenue Gate" } }, { id: 'girish_park', name: 'Girish Park', gates: { "1 & 2": "Main Gate", "3": "Vivekananda Road" } }, { id: 'mg_road', name: 'MG Road', gates: { "1": "Main Gate", "2": "Netaji Park" } }, { id: 'central', name: 'Central', gates: { "1": "Air India", "2": "Lal Bazar / Indian Coffee House", "3": "RITES Building / Hind Cinema", "4": "Yogayog Bhawan", "5": "Poddar Court", "6": "Medical College / Ganesh Chandra Avenue" } }, { id: 'chandni_chowk', name: 'Chandni Chowk' }, { id: 'esplanade', name: 'Esplanade', interchange: ['green', 'purple'], gates: { "1 & 3": "Rani Rashmoni Gate of Curzon Park", "2": "NewMarket Area / Jawaharlal Nehru Road", "4": "SN Banerjee Road / Newmarket area", "6": "Chowringee Place / NewMarket Area", "7": "Dufferin Road Maidan" } }, { id: 'park_street', name: 'Park Street', interchange: ['purple'], gates: { "1": "Indian Museum", "2": "Towards Lal Bazar", "3": "Main Gate", "6": "Kyd Street" } }, { id: 'maidan', name: 'Maidan', gates: { "1": "Victoria Memorial / Brigade Parade Ground", "2": "Jeevandeep / Middleton St", "3": "Kanak Building / Chowringhee Road" } }, { id: 'rabindra_sadan', name: 'Rabindra Sadan', gates: { "1": "Exide Gate / Shyama Prasad Mukherjee Road" } }, { id: 'netaji_bhawan', name: 'Netaji Bhawan', gates: { "1": "Ramrik Hospital", "2": "Main Gate / Ashutosh Mukherjee Road", "3": "Chakraberia Road", "4": "Jadubabur Bazar" } }, { id: 'jatin_das_park', name: 'Jatin Das Park', gates: { "1": "Ashutosh College", "3": "Chittaranjan Seba Sadan / Hazra", "4": "Jogesh Mime Academy / Paramount Hospital", "5": "Uttam Mancha", "6": "Kalighat Temple / Basushree Cinema Hall" } }, { id: 'kalighat', name: 'Kalighat', gates: { "1": "Kali Temple / Catholic Church / Kalighat Tram Depot", "3": "Tollygunge PS / Southern Avenue", "4 & 5": "Lake Market / Deshapriya Park / Rashbehari Avenue" } }, { id: 'rabindra_sarobar', name: 'Rabindra Sarobar' }, { id: 'mahanayak_uttam_kumar', name: 'Mahanayak Uttam Kumar', gates: { "1": "Towards Shyama Prasad Mukherjee Road", "2": "Tollygunge Railway Station", "5": "Bhavani Cinema / Charu Market / Tollygunge Phari", "6": "Swiss Park / Prince Anwar Shah Road (South City Mall)" } }, { id: 'netaji', name: 'Netaji', gates: { "1": "Kudghat Area" } }, { id: 'masterda_surya_sen', name: 'Masterda Surya Sen', gates: { "1": "Bansdroni" } }, { id: 'gitanjali', name: 'Gitanjali' }, { id: 'kavi_nazrul', name: 'Kavi Nazrul' }, { id: 'shahid_khudiram', name: 'Shahid Khudiram' }, { id: 'kavi_subhash', name: 'Kavi Subhash', interchange: ['orange'] } ] },
+            green: { name: 'Green Line', color: '#22c55e', stations: [ { id: 'howrah_maidan', name: 'Howrah Maidan' }, { id: 'howrah', name: 'Howrah' }, { id: 'mahakaran', name: 'Mahakaran' }, { id: 'esplanade', name: 'Esplanade', interchange: ['blue', 'purple'] }, { id: 'sealdah', name: 'Sealdah' }, { id: 'phoolbagan', name: 'Phoolbagan' }, { id: 'saltlake_stadium', name: 'Salt Lake Stadium' }, { id: 'bengal_chemical', name: 'Bengal Chemical' }, { id: 'city_center', name: 'City Center' }, { id: 'central_park', name: 'Central Park' }, { id: 'karunamoyee', name: 'Karunamoyee' }, { id: 'saltlake_sector_v', name: 'Salt Lake Sector V', interchange: ['orange'] } ] },
+            orange: { name: 'Orange Line', color: '#f97316', stations: [ { id: 'kavi_subhash', name: 'Kavi Subhash', interchange: ['blue'] }, { id: 'satyajit_ray', name: 'Satyajit Ray', gates: { "1": "Metropolis Mall / Hiland Park" } }, { id: 'jyotirindra_nandi', name: 'Jyotirindra Nandi', gates: { "1": "METRO Cash and Carry / Medisky" } }, { id: 'kavi_sukanta', name: 'Kavi Sukanta', gates: { "1": "Avishikta" } }, { id: 'hemanta_mukhopadhyay', name: 'Hemanta Mukhopadhyay', gates: { "1": "Ruby Hospital / Passport Seva Kendra" } }, { id: 'vip_bazar', name: 'VIP Bazar' }, { id: 'ritwik_ghatak', name: 'Ritwik Ghatak' }, { id: 'barun_sengupta', name: 'Barun Sengupta' }, { id: 'beleghata', name: 'Beleghata' }, { id: 'gour_kishore_ghosh', name: 'Gour Kishore Ghosh', status: 'under-construction' }, { id: 'nalban', name: 'Nalban', status: 'under-construction' }, { id: 'saltlake_sector_v', name: 'IT Sector', interchange: ['green'], status: 'under-construction' }, { id: 'nabadiganta', name: 'Nabadiganta', status: 'under-construction' }, { id: 'nazrul_tirtha', name: 'Nazrul Tirtha', status: 'under-construction' }, { id: 'swapnabhor', name: 'Swapnabhor', status: 'under-construction' }, { id: 'convention_center', name: 'Convention Center', status: 'under-construction' }, { id: 'sikhsha_tirtha', name: 'Sikhsha Tirtha', status: 'under-construction' }, { id: 'mothers_wax_museum', name: "Mother's Wax Museum", status: 'under-construction' }, { id: 'eco_park', name: 'Eco Park', status: 'under-construction' }, { id: 'mangal_deep', name: 'Mangal Deep', status: 'under-construction' }, { id: 'city_centre_2', name: 'City Centre 2', status: 'under-construction' }, { id: 'chinar_park', name: 'Chinar Park', status: 'under-construction' }, { id: 'vip_road', name: 'VIP Road', status: 'under-construction' }, { id: 'jai_hind', name: 'Jai Hind', interchange: ['yellow'], status: 'under-construction' } ] },
+            yellow: { name: 'Yellow Line', color: '#eab308', stations: [ { id: 'noapara', name: 'Noapara', interchange: ['blue'] }, { id: 'dumdum_cantonment', name: 'Dum Dum Cantonment' }, { id: 'jessore_road', name: 'Jessore Road' }, { id: 'jai_hind', name: 'Jai Hind', interchange: ['orange'] }, { id: 'birati', name: 'Birati', status: 'under-construction' }, { id: 'michael_nagar', name: 'Michael Nagar', status: 'under-construction' }, { id: 'new_barrackpore', name: 'New Barrackpore', status: 'under-construction' }, { id: 'madhyamgram', name: 'Madhyamgram', status: 'under-construction' }, { id: 'hridaypur', name: 'Hridaypur', status: 'under-construction' }, { id: 'barasat', name: 'Barasat', status: 'under-construction' } ] },
+            purple: { name: 'Purple Line', color: '#a855f7', stations: [ { id: 'esplanade', name: 'Esplanade', interchange: ['blue', 'green'], status: 'under-construction' }, { id: 'park_street', name: 'Park Street', interchange: ['blue'], status: 'under-construction' }, { id: 'victoria', name: 'Victoria', status: 'under-construction' }, { id: 'khidirpur', name: 'Khidirpur', status: 'under-construction' }, { id: 'mominpur', name: 'Mominpur', status: 'under-construction' }, { id: 'majerhat', name: 'Majerhat' }, { id: 'taratala', name: 'Taratala' }, { id: 'behala_bazar', name: 'Behala Bazar' }, { id: 'behala_chowrasta', name: 'Behala Chowrasta' }, { id: 'sakher_bazar', name: 'Sakher Bazar' }, { id: 'thakur_pukur', name: 'Thakur Pukur' }, { id: 'joka', name: 'Joka' }, { id: 'iim_calcutta', name: 'IIM Calcutta', status: 'under-construction' }, { id: 'diamond_park', name: 'Diamond Park', status: 'under-construction' } ] },
+            pink: { name: 'Pink Line', color: '#ec4899', stations: [ { id: 'baranagar', name: 'Baranagar', interchange: ['blue'], status: 'under-construction' }, { id: 'krishna_kali', name: 'Krishna Kali', status: 'under-construction' }, { id: 'acharya_prafulla_chandra', name: 'Acharya Prafulla Chandra', status: 'under-construction' }, { id: 'gandhi_ashram', name: 'Gandhi Ashram', status: 'under-construction' }, { id: 'sarat_chandra', name: 'Sarat Chandra', status: 'under-construction' }, { id: 'subhash_nagar', name: 'Subhash Nagar', status: 'under-construction' }, { id: 'rishi_bankim', name: 'Rishi Bankim', status: 'under-construction' }, { id: 'dr_rajendra_prasad', name: 'Dr Rajendra Prasad', status: 'under-construction' }, { id: 'shaw_nawaz_khan', name: 'Shaw Nawaz Khan', status: 'under-construction' }, { id: 'talpukur', name: 'Talpukur', status: 'under-construction' }, { id: 'barrackpore', name: 'Barrackpore', status: 'under-construction' } ] }
+        };
+
+        const lineTimetables = {
+            blue: {
+                name: "Blue Line",
+                closedOn: [],
+                weekdays: {
+                    firstTrain: { dakshineswar: '06:55', kavi_subhash: '06:55' },
+                    lastTrain: { dakshineswar: '21:28', kavi_subhash: '21:28' }
+                },
+                duration: 60,
+                endPoints: ['dakshineswar', 'kavi_subhash'],
+                note: "Few special trains run till 22:30."
+            },
+            green: {
+                name: "Green Line",
+                closedOn: [],
+                weekdays: {
+                    firstTrain: { howrah_maidan: '06:30', saltlake_sector_v: '06:32' },
+                    lastTrain: { howrah_maidan: '21:45', saltlake_sector_v: '21:47' }
+                },
+                sundays: {
+                    firstTrain: { howrah_maidan: '09:00', saltlake_sector_v: '09:02' },
+                    lastTrain: { howrah_maidan: '21:45', saltlake_sector_v: '21:47' }
+                },
+                duration: 32,
+                endPoints: ['howrah_maidan', 'saltlake_sector_v']
+            },
+            purple: {
+                name: "Purple Line",
+                closedOn: ['Saturday', 'Sunday'],
+                firstTrain: { majerhat: '07:14', joka: '06:50' },
+                lastTrain: { majerhat: '20:57', joka: '20:36' },
+                duration: 17,
+                endPoints: ['majerhat', 'joka']
+            },
+            orange: {
+                name: "Orange Line",
+                closedOn: ['Saturday', 'Sunday'],
+                firstTrain: { kavi_subhash: '08:00', beleghata: '08:00' },
+                lastTrain: { kavi_subhash: '20:05', beleghata: '20:05' },
+                duration: 23,
+                endPoints: ['kavi_subhash', 'beleghata']
+            },
+            yellow: {
+                name: "Yellow Line",
+                closedOn: [],
+                firstTrain: { jai_hind: '08:00', noapara: '07:55' },
+                lastTrain: { jai_hind: '20:05', noapara: '20:00' },
+                duration: 12,
+                endPoints: ['jai_hind', 'noapara']
+            }
+        };
+
+        const stationIdToCode = {
+            dakshineswar: 'KDSW', baranagar: 'KBAR', noapara: 'KNAP', dumdum: 'KDMI', belgachia: 'KBEL', shyambazar: 'KSHY', shobhabazar: 'KSHO', girish_park: 'KGPK', mg_road: 'KMHR', central: 'KCEN', chandni_chowk: 'KCWC', esplanade: 'KESP', park_street: 'KPSK', maidan: 'KMDI', rabindra_sadan: 'KRSD', netaji_bhawan: 'KNBN', jatin_das_park: 'KJPK', kalighat: 'KKHG', rabindra_sarobar: 'KRSB', mahanayak_uttam_kumar: 'KMUK', netaji: 'KNTJ', masterda_surya_sen: 'KMSN', gitanjali: 'KGTN', kavi_nazrul: 'KKNZ', shahid_khudiram: 'KSKD', kavi_subhash: 'KKVS', saltlake_sector_v: 'SVSA', karunamoyee: 'KESA', central_park: 'CPSA', city_center: 'CCSC', bengal_chemical: 'BCSD', saltlake_stadium: 'SSSA', phoolbagan: 'PBGB', sealdah: 'SDHM', howrah_maidan: 'HWWM', howrah: 'HWHM', mahakaran: 'MKNA', joka: 'KJKA', thakur_pukur: 'KTKP', sakher_bazar: 'KSKB', behala_chowrasta: 'KBCR', behala_bazar: 'KBBR', taratala: 'KTRT', majerhat: 'KMJH', satyajit_ray: 'KSJR', jyotirindra_nandi: 'KJNN', kavi_sukanta: 'KKSK', hemanta_mukhopadhyay: 'KHMD', vip_bazar: 'KVIB', ritwik_ghatak: 'KRWG', barun_sengupta: 'KBST', beleghata: 'KBGA', dumdum_cantonment: 'KDDC', jessore_road: 'KJSR', jai_hind: 'KJAI'
+        };
+
+        const lineFareMatrices = {
+            blue: { KDSW: { KDSW: 0, KBAR: 5, KNAP: 10, KDMI: 15, KBEL: 15, KSHY: 20, KSHO: 20, KGPK: 20, KMHR: 20, KCEN: 20, KCWC: 20, KESP: 20, KPSK: 20, KMDI: 20, KRSD: 20, KNBN: 20, KJPK: 20, KKHG: 25, KRSB: 25, KMUK: 25, KNTJ: 25, KMSN: 25, KGTN: 25, KKNZ: 25, KSKD: 25, KKVS: 25 }, KBAR: { KDSW: 5, KBAR: 0, KNAP: 10, KDMI: 10, KBEL: 15, KSHY: 15, KSHO: 15, KGPK: 20, KMHR: 20, KCEN: 20, KCWC: 20, KESP: 20, KPSK: 20, KMDI: 20, KRSD: 20, KNBN: 20, KJPK: 20, KKHG: 20, KRSB: 20, KMUK: 25, KNTJ: 25, KMSN: 25, KGTN: 25, KKNZ: 25, KSKD: 25, KKVS: 25 }, KNAP: { KDSW: 10, KBAR: 10, KNAP: 0, KDMI: 10, KBEL: 10, KSHY: 15, KSHO: 15, KGPK: 15, KMHR: 15, KCEN: 15, KCWC: 20, KESP: 20, KPSK: 20, KMDI: 20, KRSD: 20, KNBN: 20, KJPK: 20, KKHG: 20, KRSB: 20, KMUK: 20, KNTJ: 25, KMSN: 25, KGTN: 25, KKNZ: 25, KSKD: 25, KKVS: 25 }, KDMI: { KDSW: 15, KBAR: 10, KNAP: 10, KDMI: 0, KBEL: 10, KSHY: 10, KSHO: 10, KGPK: 15, KMHR: 15, KCEN: 15, KCWC: 15, KESP: 15, KPSK: 15, KMDI: 20, KRSD: 20, KNBN: 20, KJPK: 20, KKHG: 20, KRSB: 20, KMUK: 20, KNTJ: 20, KMSN: 20, KGTN: 25, KKNZ: 25, KSKD: 25, KKVS: 25 }, KBEL: { KDSW: 15, KBAR: 15, KNAP: 10, KDMI: 10, KBEL: 0, KSHY: 5, KSHO: 10, KGPK: 10, KMHR: 10, KCEN: 15, KCWC: 15, KESP: 15, KPSK: 15, KMDI: 15, KRSD: 15, KNBN: 20, KJPK: 20, KKHG: 20, KRSB: 20, KMUK: 20, KNTJ: 20, KMSN: 20, KGTN: 20, KKNZ: 25, KSKD: 25, KKVS: 25 }, KSHY: { KDSW: 20, KBAR: 15, KNAP: 15, KDMI: 10, KBEL: 5, KSHY: 0, KSHO: 5, KGPK: 5, KMHR: 10, KCEN: 10, KCWC: 10, KESP: 15, KPSK: 15, KMDI: 15, KRSD: 15, KNBN: 15, KJPK: 15, KKHG: 20, KRSB: 20, KMUK: 20, KNTJ: 20, KMSN: 20, KGTN: 20, KKNZ: 20, KSKD: 20, KKVS: 25 }, KSHO: { KDSW: 20, KBAR: 15, KNAP: 15, KDMI: 10, KBEL: 10, KSHY: 5, KSHO: 0, KGPK: 5, KMHR: 5, KCEN: 10, KCWC: 10, KESP: 10, KPSK: 10, KMDI: 15, KRSD: 15, KNBN: 15, KJPK: 15, KKHG: 15, KRSB: 20, KMUK: 20, KNTJ: 20, KMSN: 20, KGTN: 20, KKNZ: 20, KSKD: 20, KKVS: 25 }, KGPK: { KDSW: 20, KBAR: 20, KNAP: 15, KDMI: 15, KBEL: 10, KSHY: 5, KSHO: 5, KGPK: 0, KMHR: 5, KCEN: 5, KCWC: 10, KESP: 10, KPSK: 10, KMDI: 10, KRSD: 15, KNBN: 15, KJPK: 15, KKHG: 15, KRSB: 15, KMUK: 20, KNTJ: 20, KMSN: 20, KGTN: 20, KKNZ: 20, KSKD: 20, KKVS: 20 }, KMHR: { KDSW: 20, KBAR: 20, KNAP: 15, KDMI: 15, KBEL: 10, KSHY: 10, KSHO: 5, KGPK: 5, KMHR: 0, KCEN: 5, KCWC: 5, KESP: 10, KPSK: 10, KMDI: 10, KRSD: 10, KNBN: 15, KJPK: 15, KKHG: 15, KRSB: 15, KMUK: 15, KNTJ: 20, KMSN: 20, KGTN: 20, KKNZ: 20, KSKD: 20, KKVS: 20 }, KCEN: { KDSW: 20, KBAR: 20, KNAP: 15, KDMI: 15, KBEL: 15, KSHY: 10, KSHO: 10, KGPK: 5, KMHR: 5, KCEN: 0, KCWC: 5, KESP: 5, KPSK: 10, KMDI: 10, KRSD: 10, KNBN: 10, KJPK: 15, KKHG: 15, KRSB: 15, KMUK: 15, KNTJ: 20, KMSN: 20, KGTN: 20, KKNZ: 20, KSKD: 20, KKVS: 20 }, KCWC: { KDSW: 20, KBAR: 20, KNAP: 20, KDMI: 15, KBEL: 15, KSHY: 10, KSHO: 10, KGPK: 10, KMHR: 5, KCEN: 5, KCWC: 0, KESP: 5, KPSK: 5, KMDI: 10, KRSD: 10, KNBN: 10, KJPK: 15, KKHG: 15, KRSB: 15, KMUK: 15, KNTJ: 20, KMSN: 20, KGTN: 20, KKNZ: 20, KSKD: 20, KKVS: 20 }, KESP: { KDSW: 20, KBAR: 20, KNAP: 20, KDMI: 15, KBEL: 15, KSHY: 15, KSHO: 10, KGPK: 10, KMHR: 10, KCEN: 5, KCWC: 5, KESP: 0, KPSK: 5, KMDI: 5, KRSD: 10, KNBN: 10, KJPK: 10, KKHG: 15, KRSB: 15, KMUK: 15, KNTJ: 15, KMSN: 20, KGTN: 20, KKNZ: 20, KSKD: 20, KKVS: 20 }, KPSK: { KDSW: 20, KBAR: 20, KNAP: 20, KDMI: 15, KBEL: 15, KSHY: 15, KSHO: 10, KGPK: 10, KMHR: 10, KCEN: 10, KCWC: 5, KESP: 5, KPSK: 0, KMDI: 5, KRSD: 5, KNBN: 10, KJPK: 10, KKHG: 10, KRSB: 15, KMUK: 15, KNTJ: 15, KMSN: 20, KGTN: 20, KKNZ: 20, KSKD: 20, KKVS: 20 }, KMDI: { KDSW: 20, KBAR: 20, KNAP: 20, KDMI: 20, KBEL: 15, KSHY: 15, KSHO: 15, KGPK: 10, KMHR: 10, KCEN: 10, KCWC: 10, KESP: 5, KPSK: 5, KMDI: 0, KRSD: 5, KNBN: 5, KJPK: 10, KKHG: 10, KRSB: 10, KMUK: 15, KNTJ: 15, KMSN: 15, KGTN: 20, KKNZ: 20, KSKD: 20, KKVS: 20 }, KRSD: { KDSW: 20, KBAR: 20, KNAP: 20, KDMI: 20, KBEL: 15, KSHY: 15, KSHO: 15, KGPK: 15, KMHR: 10, KCEN: 10, KCWC: 10, KESP: 10, KPSK: 5, KMDI: 5, KRSD: 0, KNBN: 5, KJPK: 5, KKHG: 10, KRSB: 10, KMUK: 15, KNTJ: 15, KMSN: 15, KGTN: 15, KKNZ: 20, KSKD: 20, KKVS: 20 }, KNBN: { KDSW: 20, KBAR: 20, KNAP: 20, KDMI: 20, KBEL: 20, KSHY: 15, KSHO: 15, KGPK: 15, KMHR: 15, KCEN: 10, KCWC: 10, KESP: 10, KPSK: 10, KMDI: 5, KRSD: 5, KNBN: 0, KJPK: 5, KKHG: 5, KRSB: 10, KMUK: 10, KNTJ: 15, KMSN: 15, KGTN: 15, KKNZ: 20, KSKD: 20, KKVS: 20 }, KJPK: { KDSW: 20, KBAR: 20, KNAP: 20, KDMI: 20, KBEL: 20, KSHY: 15, KSHO: 15, KGPK: 15, KMHR: 15, KCEN: 15, KCWC: 15, KESP: 10, KPSK: 10, KMDI: 10, KRSD: 5, KNBN: 5, KJPK: 0, KKHG: 5, KRSB: 5, KMUK: 10, KNTJ: 15, KMSN: 15, KGTN: 15, KKNZ: 15, KSKD: 20, KKVS: 20 }, KKHG: { KDSW: 25, KBAR: 20, KNAP: 20, KDMI: 20, KBEL: 20, KSHY: 20, KSHO: 15, KGPK: 15, KMHR: 15, KCEN: 15, KCWC: 15, KESP: 15, KPSK: 10, KMDI: 10, KRSD: 10, KNBN: 5, KJPK: 5, KKHG: 0, KRSB: 5, KMUK: 10, KNTJ: 10, KMSN: 15, KGTN: 15, KKNZ: 15, KSKD: 15, KKVS: 20 }, KRSB: { KDSW: 25, KBAR: 20, KNAP: 20, KDMI: 20, KBEL: 20, KSHY: 20, KSHO: 20, KGPK: 15, KMHR: 15, KCEN: 15, KCWC: 15, KESP: 15, KPSK: 15, KMDI: 10, KRSD: 10, KNBN: 10, KJPK: 5, KKHG: 5, KRSB: 0, KMUK: 5, KNTJ: 10, KMSN: 10, KGTN: 15, KKNZ: 15, KSKD: 15, KKVS: 20 }, KMUK: { KDSW: 25, KBAR: 25, KNAP: 20, KDMI: 20, KBEL: 20, KSHY: 20, KSHO: 20, KGPK: 20, KMHR: 15, KCEN: 15, KCWC: 15, KESP: 15, KPSK: 15, KMDI: 15, KRSD: 15, KNBN: 10, KJPK: 10, KKHG: 10, KRSB: 5, KMUK: 0, KNTJ: 5, KMSN: 10, KGTN: 10, KKNZ: 15, KSKD: 15, KKVS: 15 }, KNTJ: { KDSW: 25, KBAR: 25, KNAP: 25, KDMI: 20, KBEL: 20, KSHY: 20, KSHO: 20, KGPK: 20, KMHR: 20, KCEN: 20, KCWC: 20, KESP: 15, KPSK: 15, KMDI: 15, KRSD: 15, KNBN: 15, KJPK: 15, KKHG: 10, KRSB: 10, KMUK: 5, KNTJ: 0, KMSN: 5, KGTN: 10, KKNZ: 10, KSKD: 15, KKVS: 15 }, KMSN: { KDSW: 25, KBAR: 25, KNAP: 25, KDMI: 20, KBEL: 20, KSHY: 20, KSHO: 20, KGPK: 20, KMHR: 20, KCEN: 20, KCWC: 20, KESP: 20, KPSK: 20, KMDI: 15, KRSD: 15, KNBN: 15, KJPK: 15, KKHG: 15, KRSB: 10, KMUK: 10, KNTJ: 5, KMSN: 0, KGTN: 5, KKNZ: 10, KSKD: 10, KKVS: 15 }, KGTN: { KDSW: 25, KBAR: 25, KNAP: 25, KDMI: 25, KBEL: 20, KSHY: 20, KSHO: 20, KGPK: 20, KMHR: 20, KCEN: 20, KCWC: 20, KESP: 20, KPSK: 20, KMDI: 20, KRSD: 15, KNBN: 15, KJPK: 15, KKHG: 15, KRSB: 15, KMUK: 10, KNTJ: 10, KMSN: 5, KGTN: 0, KKNZ: 5, KSKD: 10, KKVS: 10 }, KKNZ: { KDSW: 25, KBAR: 25, KNAP: 25, KDMI: 25, KBEL: 25, KSHY: 20, KSHO: 20, KGPK: 20, KMHR: 20, KCEN: 20, KCWC: 20, KESP: 20, KPSK: 20, KMDI: 20, KRSD: 20, KNBN: 20, KJPK: 15, KKHG: 15, KRSB: 15, KMUK: 15, KNTJ: 10, KMSN: 10, KGTN: 5, KKNZ: 0, KSKD: 5, KKVS: 10 }, KSKD: { KDSW: 25, KBAR: 25, KNAP: 25, KDMI: 25, KBEL: 25, KSHY: 20, KSHO: 20, KGPK: 20, KMHR: 20, KCEN: 20, KCWC: 20, KESP: 20, KPSK: 20, KMDI: 20, KRSD: 20, KNBN: 20, KJPK: 20, KKHG: 15, KRSB: 15, KMUK: 15, KNTJ: 15, KMSN: 10, KGTN: 10, KKNZ: 5, KSKD: 0, KKVS: 5 }, KKVS: { KDSW: 25, KBAR: 25, KNAP: 25, KDMI: 25, KBEL: 25, KSHY: 25, KSHO: 25, KGPK: 20, KMHR: 20, KCEN: 20, KCWC: 20, KESP: 20, KPSK: 20, KMDI: 20, KRSD: 20, KNBN: 20, KJPK: 20, KKHG: 20, KRSB: 20, KMUK: 15, KNTJ: 15, KMSN: 15, KGTN: 10, KKNZ: 10, KSKD: 5, KKVS: 0 }
+            },
+            green: {
+                HWMM: { HWMM: 0, HWHM: 5, MKNA: 10, KESP: 10, SDHM: 20, PBGB: 20, SSSA: 30, BCSD: 30, CCSC: 30, CPSA: 30, KESA: 30, SVSA: 30 }, HWHM: { HWMM: 5, HWHM: 0, MKNA: 10, KESP: 10, SDHM: 20, PBGB: 20, SSSA: 20, BCSD: 30, CCSC: 30, CPSA: 30, KESA: 30, SVSA: 30 }, MKNA: { HWMM: 10, HWHM: 10, MKNA: 0, KESP: 5, SDHM: 10, PBGB: 20, SSSA: 20, BCSD: 20, CCSC: 20, CPSA: 20, KESA: 30, SVSA: 30 }, KESP: { HWMM: 10, HWHM: 10, MKNA: 5, KESP: 0, SDHM: 10, PBGB: 10, SSSA: 20, BCSD: 20, CCSC: 20, CPSA: 20, KESA: 20, SVSA: 30 }, SDHM: { HWMM: 20, HWHM: 20, MKNA: 10, KESP: 10, SDHM: 0, PBGB: 10, SSSA: 10, BCSD: 10, CCSC: 10, CPSA: 20, KESA: 20, SVSA: 20 }, PBGB: { HWMM: 20, HWHM: 20, MKNA: 20, KESP: 10, SDHM: 10, PBGB: 0, SSSA: 5, BCSD: 5, CCSC: 10, CPSA: 10, KESA: 10, SVSA: 20 }, SSSA: { HWMM: 30, HWHM: 20, MKNA: 20, KESP: 20, SDHM: 10, PBGB: 5, SSSA: 0, BCSD: 5, CCSC: 5, CPSA: 5, KESA: 10, SVSA: 10 }, BCSD: { HWMM: 30, HWHM: 30, MKNA: 20, KESP: 20, SDHM: 10, PBGB: 5, SSSA: 5, BCSD: 0, CCSC: 5, CPSA: 5, KESA: 10, SVSA: 10 }, CCSC: { HWMM: 30, HWHM: 30, MKNA: 20, KESP: 20, SDHM: 10, PBGB: 10, SSSA: 5, BCSD: 5, CCSC: 0, CPSA: 5, KESA: 5, SVSA: 10 }, CPSA: { HWMM: 30, HWHM: 30, MKNA: 20, KESP: 20, SDHM: 20, PBGB: 10, SSSA: 5, BCSD: 5, CCSC: 5, CPSA: 0, KESA: 5, SVSA: 10 }, KESA: { HWMM: 30, HWHM: 30, MKNA: 30, KESP: 20, SDHM: 20, PBGB: 10, SSSA: 10, BCSD: 10, CCSC: 5, CPSA: 5, KESA: 0, SVSA: 5 }, SVSA: { HWMM: 30, HWHM: 30, MKNA: 30, KESP: 30, SDHM: 20, PBGB: 20, SSSA: 10, BCSD: 10, CCSC: 10, CPSA: 10, KESA: 5, SVSA: 0 }
+            },
+            purple: {
+                KJKA: { KJKA: 0, KTKP: 5, KSKB: 5, KBCR: 10, KBBR: 10, KTRT: 20, KMJH: 20 }, KTKP: { KJKA: 5, KTKP: 0, KSKB: 5, KBCR: 10, KBBR: 10, KTRT: 20, KMJH: 20 }, KSKB: { KJKA: 5, KTKP: 5, KSKB: 0, KBCR: 5, KBBR: 10, KTRT: 20, KMJH: 20 }, KBCR: { KJKA: 10, KTKP: 10, KSKB: 5, KBCR: 0, KBBR: 5, KTRT: 10, KMJH: 20 }, KBBR: { KJKA: 10, KTKP: 10, KSKB: 10, KBCR: 5, KBBR: 0, KTRT: 5, KMJH: 10 }, KTRT: { KJKA: 20, KTKP: 20, KSKB: 20, KBCR: 10, KBBR: 5, KTRT: 0, KMJH: 5 }, KMJH: { KJKA: 20, KTKP: 20, KSKB: 20, KBCR: 20, KBBR: 10, KTRT: 5, KMJH: 0 }
+            },
+            orange: {
+                KKVS: { KKVS: 0, KSJR: 5, KJNN: 10, KKSK: 10, KHMD: 20, KVIB: 20, KRWG: 20, KBST: 20, KBGA: 20 }, KSJR: { KKVS: 5, KSJR: 0, KJNN: 5, KKSK: 10, KHMD: 10, KVIB: 10, KRWG: 10, KBST: 20, KBGA: 20 }, KJNN: { KKVS: 10, KSJR: 5, KJNN: 0, KKSK: 5, KHMD: 10, KVIB: 10, KRWG: 10, KBST: 10, KBGA: 20 }, KKSK: { KKVS: 10, KSJR: 10, KJNN: 5, KKSK: 0, KHMD: 5, KVIB: 10, KRWG: 10, KBST: 10, KBGA: 20 }, KHMD: { KKVS: 20, KSJR: 10, KJNN: 10, KKSK: 5, KHMD: 0, KVIB: 10, KRWG: 10, KBST: 10, KBGA: 10 }, KVIB: { KKVS: 20, KSJR: 10, KJNN: 10, KKSK: 10, KHMD: 10, KVIB: 0, KRWG: 5, KBST: 5, KBGA: 10 }, KRWG: { KKVS: 20, KSJR: 20, KJNN: 10, KKSK: 10, KHMD: 10, KVIB: 5, KRWG: 0, KBST: 5, KBGA: 10 }, KBST: { KKVS: 20, KSJR: 20, KJNN: 20, KKSK: 10, KHMD: 10, KVIB: 5, KRWG: 5, KBST: 0, KBGA: 5 }, KBGA: { KKVS: 20, KSJR: 20, KJNN: 20, KKSK: 20, KHMD: 10, KVIB: 10, KRWG: 10, KBST: 5, KBGA: 0 }
+            },
+            yellow: {
+                KNAP: { KNAP: 0, KDDC: 10, KJSR: 20, KJAI: 20 },
+                KDDC: { KNAP: 10, KDDC: 0, KJSR: 10, KJAI: 10 },
+                KJSR: { KNAP: 20, KDDC: 10, KJSR: 0, KJAI: 5 },
+                KJAI: { KNAP: 20, KDDC: 10, KJSR: 5, KJAI: 0 }
+            }
+        };
+
+        const stationCoords = {
+            // Blue Line
+            dakshineswar: { x: 350, y: 50 }, baranagar: { x: 350, y: 100 }, noapara: { x: 350, y: 150 }, dumdum: { x: 350, y: 200 }, belgachia: { x: 350, y: 250 }, shyambazar: { x: 350, y: 300 }, shobhabazar: { x: 350, y: 350 }, girish_park: { x: 350, y: 400 }, mg_road: { x: 350, y: 450 }, central: { x: 350, y: 500 }, chandni_chowk: { x: 350, y: 550 }, esplanade: { x: 350, y: 600 }, park_street: { x: 350, y: 650 }, maidan: { x: 350, y: 700 }, rabindra_sadan: { x: 350, y: 750 }, netaji_bhawan: { x: 350, y: 800 }, jatin_das_park: { x: 350, y: 850 }, kalighat: { x: 350, y: 900 }, rabindra_sarobar: { x: 350, y: 950 }, mahanayak_uttam_kumar: { x: 350, y: 1000 }, netaji: { x: 350, y: 1050 }, masterda_surya_sen: { x: 350, y: 1100 }, gitanjali: { x: 350, y: 1150 }, kavi_nazrul: { x: 350, y: 1200 }, shahid_khudiram: { x: 350, y: 1250 }, kavi_subhash: { x: 350, y: 1300 },
+            // Green Line
+            howrah_maidan: { x: 120, y: 600 }, howrah: { x: 200, y: 600 }, mahakaran: { x: 280, y: 600 }, sealdah: { x: 430, y: 600 }, phoolbagan: { x: 510, y: 600 }, saltlake_stadium: { x: 600, y: 600 }, bengal_chemical: { x: 700, y: 600 }, city_center: { x: 800, y: 600 }, central_park: { x: 900, y: 600 }, karunamoyee: { x: 1000, y: 600 }, saltlake_sector_v: { x: 1100, y: 600 },
+            // Orange Line
+            satyajit_ray: { x: 425, y: 1300 }, jyotirindra_nandi: { x: 500, y: 1300 }, kavi_sukanta: { x: 575, y: 1300 }, hemanta_mukhopadhyay: { x: 650, y: 1300 }, vip_bazar: { x: 725, y: 1300 }, ritwik_ghatak: { x: 800, y: 1300 }, barun_sengupta: { x: 875, y: 1300 }, beleghata: { x: 950, y: 1300 }, gour_kishore_ghosh: { x: 1050, y: 1250 }, nalban: { x: 1100, y: 1100 },  nabadiganta: { x: 1250, y: 600 }, nazrul_tirtha: { x: 1300, y: 500 }, swapnabhor: { x: 1300, y: 400 }, convention_center: { x: 1250, y: 300 }, sikhsha_tirtha: { x: 1150, y: 250 }, mothers_wax_museum: { x: 1050, y: 200 }, eco_park: { x: 950, y: 180 }, mangal_deep: { x: 850, y: 180 }, city_centre_2: { x: 750, y: 180 }, chinar_park: { x: 675, y: 200 }, vip_road: { x: 625, y: 250 },
+            // Yellow Line
+            dumdum_cantonment: { x: 425, y: 150 }, jessore_road: { x: 500, y: 150 }, jai_hind: { x: 575, y: 150 }, birati: { x: 675, y: 150 }, michael_nagar: { x: 775, y: 150 }, new_barrackpore: { x: 875, y: 150 }, madhyamgram: { x: 975, y: 150 }, hridaypur: { x: 1075, y: 150 }, barasat: { x: 1175, y: 150 },
+            // Purple Line
+            victoria: { x: 350, y: 720 }, khidirpur: { x: 340, y: 790 }, mominpur: { x: 330, y: 860 }, majerhat: { x: 330, y: 920 },  taratala: { x: 300, y: 940 }, behala_bazar: { x: 270, y: 960 }, behala_chowrasta: { x: 240, y: 980 }, sakher_bazar: { x: 210, y: 1000 }, thakur_pukur: { x: 180, y: 1020 }, joka: { x: 150, y: 1040 }, iim_calcutta: { x: 150, y: 1100 }, diamond_park: { x: 150, y: 1160 },
+            // Pink Line
+            krishna_kali: { x: 320, y: 70 }, acharya_prafulla_chandra: { x: 290, y: 40 }, gandhi_ashram: { x: 260, y: 10 }, sarat_chandra: { x: 230, y: -20 }, subhash_nagar: { x: 200, y: -50 }, rishi_bankim: { x: 170, y: -80 }, dr_rajendra_prasad: { x: 140, y: -110 }, shaw_nawaz_khan: { x: 110, y: -140 }, talpukur: { x: 80, y: -170 }, barrackpore: { x: 50, y: -200 }
+        };
+
+        // Real-world approximate lat/lng for each station (WGS84).
+        // Used to plot stations on an actual OpenStreetMap/Leaflet map.
+        // NOTE: these are close approximations for a working demo — swap in
+        // survey-accurate coordinates later if you need pinpoint precision.
+        const stationGeo = {
+            // Blue Line (Dakshineswar -> Kavi Subhash)
+            dakshineswar: [22.6547, 88.3629], baranagar: [22.6461, 88.3719], noapara: [22.6288, 88.3796],
+            dumdum: [22.6154, 88.4207], belgachia: [22.6041, 88.3796], shyambazar: [22.5975, 88.3746],
+            shobhabazar: [22.5934, 88.3688], girish_park: [22.5895, 88.3627], mg_road: [22.5825, 88.3595],
+            central: [22.5754, 88.3593], chandni_chowk: [22.5701, 88.3574], esplanade: [22.5626, 88.3529],
+            park_street: [22.5511, 88.3520], maidan: [22.5453, 88.3438], rabindra_sadan: [22.5395, 88.3505],
+            netaji_bhawan: [22.5340, 88.3512], jatin_das_park: [22.5288, 88.3479], kalighat: [22.5192, 88.3444],
+            rabindra_sarobar: [22.5090, 88.3568], mahanayak_uttam_kumar: [22.4989, 88.3492], netaji: [22.4880, 88.3572],
+            masterda_surya_sen: [22.4790, 88.3610], gitanjali: [22.4700, 88.3650], kavi_nazrul: [22.4630, 88.3690],
+            shahid_khudiram: [22.4570, 88.3720], kavi_subhash: [22.4611, 88.3958],
+            // Green Line (Howrah Maidan -> Salt Lake Sector V)
+            howrah_maidan: [22.5850, 88.3260], howrah: [22.5804, 88.3426], mahakaran: [22.5726, 88.3465],
+            sealdah: [22.5675, 88.3707], phoolbagan: [22.5680, 88.3830], saltlake_stadium: [22.5697, 88.4010],
+            bengal_chemical: [22.5720, 88.4080], city_center: [22.5760, 88.4160], central_park: [22.5800, 88.4230],
+            karunamoyee: [22.5820, 88.4290], saltlake_sector_v: [22.5726, 88.4338],
+            // Orange Line (Kavi Subhash -> Airport, via EM Bypass) — later stretch is under-construction
+            satyajit_ray: [22.4820, 88.3980], jyotirindra_nandi: [22.4900, 88.3970], kavi_sukanta: [22.4970, 88.3990],
+            hemanta_mukhopadhyay: [22.5090, 88.4030], vip_bazar: [22.5180, 88.4080], ritwik_ghatak: [22.5300, 88.4070],
+            barun_sengupta: [22.5400, 88.4090], beleghata: [22.5580, 88.4020], gour_kishore_ghosh: [22.5720, 88.4060],
+            nalban: [22.5750, 88.4180], nabadiganta: [22.5850, 88.4330], nazrul_tirtha: [22.5950, 88.4380],
+            swapnabhor: [22.6020, 88.4400], convention_center: [22.6080, 88.4370], sikhsha_tirtha: [22.6150, 88.4320],
+            mothers_wax_museum: [22.6220, 88.4270], eco_park: [22.6187, 88.4308], mangal_deep: [22.6250, 88.4250],
+            city_centre_2: [22.6300, 88.4380], chinar_park: [22.6380, 88.4480], vip_road: [22.6450, 88.4550],
+            // Yellow Line (Noapara -> Barasat, via Jai Hind/Airport)
+            dumdum_cantonment: [22.6420, 88.4130], jessore_road: [22.6520, 88.4230], jai_hind: [22.6547, 88.4467],
+            birati: [22.6650, 88.4520], michael_nagar: [22.6740, 88.4570], new_barrackpore: [22.6850, 88.4630],
+            madhyamgram: [22.6970, 88.4700], hridaypur: [22.7080, 88.4770], barasat: [22.7220, 88.4820],
+            // Purple Line (Joka -> Esplanade)
+            victoria: [22.5445, 88.3420], khidirpur: [22.5350, 88.3280], mominpur: [22.5230, 88.3180],
+            majerhat: [22.5024, 88.3312], taratala: [22.4950, 88.3200], behala_bazar: [22.4870, 88.3130],
+            behala_chowrasta: [22.4820, 88.3080], sakher_bazar: [22.4760, 88.3040], thakur_pukur: [22.4670, 88.3030],
+            joka: [22.4573, 88.3097], iim_calcutta: [22.4520, 88.3010], diamond_park: [22.4480, 88.2950]
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const startStationInput = document.getElementById('startStation');
+            const endStationInput = document.getElementById('endStation');
+            const startSuggestions = document.getElementById('startSuggestions');
+            const endSuggestions = document.getElementById('endSuggestions');
+            const findRouteBtn = document.getElementById('findRouteBtn');
+            const routeDetailsDiv = document.getElementById('routeDetails');
+            const realMapContainer = document.getElementById('realMapContainer');
+            const locateMeBtn = document.getElementById('locateMeBtn');
+            const nearestStationResult = document.getElementById('nearestStationResult');
+            let leafletMap = null;
+            let leafletLayers = { lines: [], markers: [], route: null, userMarker: null };
+            const stationMap = new Map();
+            let currentRoute = [];
+
+            // First, populate the stationMap with ALL stations for routing logic
+            // An interchange station is operational if ANY of its instances are operational.
+            for (const lineKey in metroData) {
+                metroData[lineKey].stations.forEach(station => {
+                    const existingStation = stationMap.get(station.id);
+                    if (!existingStation || (existingStation.status === 'under-construction' && station.status !== 'under-construction')) {
+                        stationMap.set(station.id, station);
+                    }
+                });
+            }
+
+            // Then, create the list for the search bar with ONLY operational stations
+            const allStations = Array.from(stationMap.values())
+                .filter(station => station.status !== 'under-construction')
+                .sort((a, b) => a.name.localeCompare(b.name));
+
+            // ---------- Real-world map (Leaflet + OpenStreetMap) ----------
+            const haversineKm = (lat1, lon1, lat2, lon2) => {
+                const toRad = deg => deg * Math.PI / 180;
+                const R = 6371;
+                const dLat = toRad(lat2 - lat1);
+                const dLon = toRad(lon2 - lon1);
+                const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            };
+
+            function initRealMap() {
+                if (leafletMap) return; // already initialized
+                if (typeof L === 'undefined') {
+                    realMapContainer.innerHTML = '<div class="text-center text-red-400 p-6">Map library failed to load — check your internet connection or that leaflet CDN scripts aren\'t blocked, then refresh.</div>';
+                    return;
+                }
+                leafletMap = L.map('realMap', { scrollWheelZoom: true }).setView([22.56, 88.38], 11);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap contributors',
+                    maxZoom: 18
+                }).addTo(leafletMap);
+
+                // Draw each line's stations connected in sequence
+                for (const lineKey in metroData) {
+                    const line = metroData[lineKey];
+                    const latlngs = [];
+                    line.stations.forEach(station => {
+                        const geo = stationGeo[station.id];
+                        if (!geo) return;
+                        latlngs.push(geo);
+                        const isUC = station.status === 'under-construction';
+                        const marker = L.circleMarker(geo, {
+                            radius: 5,
+                            color: '#ffffff',
+                            weight: 1.5,
+                            fillColor: line.color,
+                            fillOpacity: isUC ? 0.4 : 1
+                        }).addTo(leafletMap);
+                        marker.bindPopup(`<b>${station.name}</b><br>${line.name}${isUC ? ' (under construction)' : ''}`);
+                        marker.stationId = station.id;
+                        leafletLayers.markers.push(marker);
+                    });
+                    if (latlngs.length > 1) {
+                        const isPartlyUC = line.stations.some(s => s.status === 'under-construction');
+                        const polyline = L.polyline(latlngs, {
+                            color: line.color,
+                            weight: 4,
+                            opacity: 0.8,
+                            dashArray: isPartlyUC ? '6 6' : null
+                        }).addTo(leafletMap);
+                        leafletLayers.lines.push(polyline);
+                    }
+                }
+            }
+
+            document.addEventListener('metroAppVisible', () => {
+                initRealMap();
+                setTimeout(() => leafletMap && leafletMap.invalidateSize(), 150);
+            });
+            // Fallback in case the event already fired before this listener was attached
+            if (!document.getElementById('main-content').classList.contains('hidden')) {
+                initRealMap();
+                setTimeout(() => leafletMap && leafletMap.invalidateSize(), 150);
+            }
+
+            function highlightRouteOnRealMap(route) {
+                if (!leafletMap) return;
+                if (leafletLayers.route) { leafletMap.removeLayer(leafletLayers.route); leafletLayers.route = null; }
+                const latlngs = route.map(id => stationGeo[id]).filter(Boolean);
+                if (latlngs.length < 2) return;
+                leafletLayers.route = L.polyline(latlngs, { color: '#f472b6', weight: 6, opacity: 0.95 }).addTo(leafletMap);
+                leafletMap.fitBounds(leafletLayers.route.getBounds(), { padding: [30, 30] });
+            }
+
+            function findNearestStation(userLat, userLng) {
+                let nearest = null;
+                let minDist = Infinity;
+                allStations.forEach(station => {
+                    const geo = stationGeo[station.id];
+                    if (!geo) return;
+                    const d = haversineKm(userLat, userLng, geo[0], geo[1]);
+                    if (d < minDist) { minDist = d; nearest = station; }
+                });
+                return { station: nearest, distanceKm: minDist };
+            }
+
+            locateMeBtn.addEventListener('click', () => {
+                if (!navigator.geolocation) {
+                    nearestStationResult.classList.remove('hidden');
+                    nearestStationResult.textContent = 'Geolocation is not supported by your browser.';
+                    return;
+                }
+                nearestStationResult.classList.remove('hidden');
+                nearestStationResult.textContent = 'Locating you...';
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const { latitude, longitude } = pos.coords;
+                        const { station, distanceKm } = findNearestStation(latitude, longitude);
+                        if (!station) {
+                            nearestStationResult.textContent = "Couldn't determine a nearest station.";
+                            return;
+                        }
+                        nearestStationResult.innerHTML = `Nearest station: <b class="text-white">${station.name}</b> — approx. ${distanceKm.toFixed(1)} km away.`;
+
+                        if (leafletMap) {
+                            if (leafletLayers.userMarker) leafletMap.removeLayer(leafletLayers.userMarker);
+                            leafletLayers.userMarker = L.marker([latitude, longitude], {
+                                icon: L.divIcon({ className: 'metro-user-marker', iconSize: [14, 14] })
+                            }).addTo(leafletMap).bindPopup('You are here').openPopup();
+
+                            const stationGeoLoc = stationGeo[station.id];
+                            if (stationGeoLoc) {
+                                const bounds = L.latLngBounds([[latitude, longitude], stationGeoLoc]);
+                                leafletMap.fitBounds(bounds, { padding: [50, 50] });
+                            }
+                        }
+                    },
+                    (err) => {
+                        nearestStationResult.textContent = 'Could not get your location. Please allow location access and try again.';
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            });
+            // ---------- End real-world map ----------
+
+            const createSuggestions = (input, suggestionsContainer) => {
+                const query = input.value.toLowerCase();
+                suggestionsContainer.innerHTML = '';
+                if (!query) {
+                    suggestionsContainer.classList.add('hidden');
+                    return;
+                }
+                const filteredStations = allStations.filter(station => station.name.toLowerCase().includes(query));
+                
+                if (filteredStations.length > 0) {
+                    filteredStations.forEach(station => {
+                        const div = document.createElement('div');
+                        div.textContent = station.name;
+                        div.className = 'p-3 hover:bg-gray-700 cursor-pointer';
+                        div.addEventListener('click', () => {
+                            input.value = station.name;
+                            input.dataset.stationId = station.id;
+                            suggestionsContainer.classList.add('hidden');
+                        });
+                        suggestionsContainer.appendChild(div);
+                    });
+                    suggestionsContainer.classList.remove('hidden');
+                } else {
+                    suggestionsContainer.classList.add('hidden');
+                }
+            };
+
+            startStationInput.addEventListener('input', () => createSuggestions(startStationInput, startSuggestions));
+            endStationInput.addEventListener('input', () => createSuggestions(endStationInput, endSuggestions));
+            
+            document.addEventListener('click', (e) => {
+                if (!startStationInput.contains(e.target)) startSuggestions.classList.add('hidden');
+                if (!endStationInput.contains(e.target)) endSuggestions.classList.add('hidden');
+            });
+
+
+            findRouteBtn.addEventListener('click', () => {
+                const startId = startStationInput.dataset.stationId;
+                const endId = endStationInput.dataset.stationId;
+                
+                if (!startId || !endId) {
+                    alert('Please select valid start and end stations from the suggestions.');
+                    return;
+                }
+                if (startId === endId) {
+                    alert('Start and end stations cannot be the same.');
+                    return;
+                }
+                currentRoute = findShortestRoute(startId, endId);
+                
+                if (currentRoute) {
+                    routeDetailsDiv.style.display = 'block';
+                    displayRouteDetails(currentRoute);
+                    if (leafletMap) highlightRouteOnRealMap(currentRoute);
+                } else {
+                    routeDetailsDiv.style.display = 'block';
+                    routeDetailsDiv.innerHTML = `<p class="text-red-400 font-semibold">No route found between the selected stations.</p>`;
+                }
+            });
+
+            function findShortestRoute(startId, endId) {
+                let queue = [[startId, [startId]]];
+                let visited = new Set([startId]);
+                while (queue.length > 0) {
+                    let [currentId, path] = queue.shift();
+                    if (currentId === endId) return path;
+                    getNeighbors(currentId).forEach(neighborId => {
+                        if (!visited.has(neighborId)) {
+                            visited.add(neighborId);
+                            let newPath = [...path, neighborId];
+                            queue.push([neighborId, newPath]);
+                        }
+                    });
+                }
+                return null;
+            }
+
+            function getNeighbors(stationId) {
+                const neighbors = new Set();
+                // Manual connections
+                if (stationId === 'kalighat') neighbors.add('taratala');
+                if (stationId === 'taratala') neighbors.add('kalighat');
+                if (stationId === 'shahid_khudiram') neighbors.add('satyajit_ray');
+                if (stationId === 'satyajit_ray') neighbors.add('shahid_khudiram');
+                
+                for (const lineKey in metroData) {
+                    const line = metroData[lineKey];
+                    const stationIndex = line.stations.findIndex(s => s.id === stationId);
+
+                    if (stationIndex !== -1) {
+                        // Add previous station if it exists
+                        if (stationIndex > 0) {
+                            const prevStationId = line.stations[stationIndex - 1].id;
+                            neighbors.add(prevStationId);
+                        }
+                        // Add next station if it exists
+                        if (stationIndex < line.stations.length - 1) {
+                            const nextStationId = line.stations[stationIndex + 1].id;
+                           neighbors.add(nextStationId);
+                        }
+                        
+                        // Handle interchanges
+                        const station = line.stations[stationIndex];
+                        if (station.interchange) {
+                            station.interchange.forEach(interchangeLineKey => {
+                                const interchangeLine = metroData[interchangeLineKey];
+                                const interchangeStation = interchangeLine.stations.find(s => s.id === stationId);
+                                if (interchangeStation) {
+                                     const interchangeIndex = interchangeLine.stations.findIndex(s => s.id === stationId);
+                                      if (interchangeIndex > 0) neighbors.add(interchangeLine.stations[interchangeIndex - 1].id);
+                                    if (interchangeIndex < interchangeLine.stations.length - 1) neighbors.add(interchangeLine.stations[interchangeIndex + 1].id);
+                                }
+                            });
+                        }
+                    }
+                }
+                
+                // Return only neighbors that are currently operational
+                return Array.from(neighbors).filter(id => stationMap.get(id)?.status !== 'under-construction');
+            }
+
+            function getLineForSegment(station1Id, station2Id) {
+                for (const lineKey in metroData) {
+                    const line = metroData[lineKey];
+                    for (let i = 0; i < line.stations.length - 1; i++) {
+                        if ((line.stations[i].id === station1Id && line.stations[i+1].id === station2Id) || (line.stations[i].id === station2Id && line.stations[i+1].id === station1Id)) {
+                            // Check if the segment is operational
+                            if (line.stations[i].status !== 'under-construction' && line.stations[i+1].status !== 'under-construction') {
+                                return metroData[lineKey];
+                            }
+                        }
+                    }
+                }
+                return null;
+            }
+
+            function displayRouteDetails(route) {
+                routeDetailsDiv.innerHTML = '';
+                if (!route || route.length < 2) return;
+                const startStation = stationMap.get(route[0]);
+                const endStation = stationMap.get(route[route.length - 1]);
+                let journeyHtml = `<h3 class="text-xl font-semibold mb-3 text-white">Your Journey Simplified</h3>`;
+                let journeyParts = [];
+
+                // --- NEW SERVICE ALERT SECTION ---
+                const now = new Date();
+                const currentDay = now.toLocaleString('en-US', { weekday: 'long' });
+                const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+                let serviceAlertHtml = '';
+                
+                const linesInRoute = new Set();
+                for (let i = 0; i < route.length - 1; i++) {
+                    const line = getLineForSegment(route[i], route[i+1]);
+                    if (line) {
+                        linesInRoute.add(line.name.toLowerCase().replace(' line', ''));
+                    }
+                }
+                
+                linesInRoute.forEach(lineKey => {
+                    const timetable = lineTimetables[lineKey];
+                    if (timetable) {
+                        let schedule;
+                        if (timetable.weekdays && timetable.sundays) { // For lines with different schedules
+                            schedule = (currentDay === 'Sunday') ? timetable.sundays : timetable.weekdays;
+                        } else if (timetable.weekdays) { // For lines with one schedule
+                             schedule = timetable.weekdays;
+                        } else { // For old structures
+                            schedule = timetable;
+                        }
+
+                        if (timetable.closedOn.includes(currentDay)) {
+                             serviceAlertHtml += `<div class="bg-red-500/10 border border-red-500/30 p-3 rounded-lg mb-2 text-red-300"><strong>Service Alert:</strong> The ${timetable.name} is suspended on ${currentDay}s.</div>`;
+                        } else {
+                            // Find the direction of travel on this line
+                            const routeStationsOnLine = route.filter(id => metroData[lineKey].stations.some(s => s.id === id));
+                            if (routeStationsOnLine.length > 0) {
+                                const lineStationIds = metroData[lineKey].stations.map(s => s.id);
+                                
+                                let travelStartPoint = startStation.id;
+                                if (!lineStationIds.includes(travelStartPoint)) {
+                                    travelStartPoint = routeStationsOnLine[0];
+                                }
+                                
+                                const firstTrainTime = schedule.firstTrain[travelStartPoint];
+                                const lastTrainTime = schedule.lastTrain[travelStartPoint];
+                                const lastTrainNote = timetable.note ? ` (${timetable.note})` : '';
+
+                                if(firstTrainTime && currentTime < firstTrainTime) {
+                                    serviceAlertHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-2 text-yellow-300"><strong>Timing Alert:</strong> The first train on the ${timetable.name} from your direction starts at ${firstTrainTime}.</div>`;
+                                }
+                                if (lastTrainTime && currentTime > lastTrainTime) {
+                                     serviceAlertHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-2 text-yellow-300"><strong>Timing Alert:</strong> The last train on the ${timetable.name} from your direction may have departed at ${lastTrainTime}${lastTrainNote}.</div>`;
+                                }
+                            }
+                        }
+                    }
+                });
+                journeyHtml += serviceAlertHtml;
+                // --- END OF SERVICE ALERT SECTION ---
+
+
+                let involvesMaintenance = route.some((id, i) => i < route.length -1 && ((id === 'shahid_khudiram' && route[i+1] === 'satyajit_ray') || (id === 'satyajit_ray' && route[i+1] === 'shahid_khudiram')));
+                if (involvesMaintenance) {
+                    journeyHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-4 text-left md:text-center">
+                        <p class="text-yellow-300"><strong class="font-bold">Maintenance Alert:</strong> Interchange at Kavi Subhash is closed. An alternative route is suggested.</p>
+                    </div>`;
+                }
+                const firstSegmentLine = getLineForSegment(route[0], route[1]);
+                if (firstSegmentLine) {
+                     const part = `Board the <strong style="color:${firstSegmentLine.color};">${firstSegmentLine.name}</strong> from <strong>${startStation.name}</strong>.`;
+                     journeyParts.push(part);
+                }
+                for (let i = 1; i < route.length - 1; i++) {
+                    const prevStationId = route[i-1], currentStationId = route[i], nextStationId = route[i+1];
+                    if ((currentStationId === 'kalighat' && nextStationId === 'taratala') || (currentStationId === 'taratala' && nextStationId === 'kalighat')) {
+                        const nextMetroLine = getLineForSegment(nextStationId, route[i + 2]);
+                        let part1 = `Travel to <strong>${stationMap.get(currentStationId).name}</strong>.`;
+                        journeyParts.push(part1);
+                        
+                        let part2 = `<span class="text-yellow-400 font-semibold">Take an auto ride to ${stationMap.get(nextStationId).name}</span> to board the <strong style="color:${nextMetroLine.color};">${nextMetroLine.name}</strong>.`;
+                        journeyParts.push(part2);
+                        i++;
+                        continue;
+                    }
+                    if ((currentStationId === 'shahid_khudiram' && nextStationId === 'satyajit_ray') || (currentStationId === 'satyajit_ray' && nextStationId === 'shahid_khudiram')) {
+                        const nextMetroLine = getLineForSegment(nextStationId, route[i + 2]);
+                        let nextLineInfo = nextMetroLine ? ` to board the <strong style="color:${nextMetroLine.color};">${nextMetroLine.name}</strong>` : '';
+                        
+                        let part1 = `Travel to <strong>${stationMap.get(currentStationId).name}</strong>.`;
+                        journeyParts.push(part1);
+
+                        let part2 = `<span class="text-yellow-400 font-semibold">Exit and take a bus to ${stationMap.get(nextStationId).name}</span>${nextLineInfo}.`;
+                        journeyParts.push(part2);
+                        i++;
+                        continue;
+                    }
+                    const prevSegmentLine = getLineForSegment(prevStationId, currentStationId);
+                    const nextSegmentLine = getLineForSegment(currentStationId, nextStationId);
+                    if (prevSegmentLine && nextSegmentLine && prevSegmentLine.name !== nextSegmentLine.name) {
+                        const part = `At <strong>${stationMap.get(currentStationId).name}</strong>, change to the <strong style="color:${nextSegmentLine.color};">${nextSegmentLine.name}</strong>.`;
+                        journeyParts.push(part);
+                    }
+                }
+                const lastPart = `Continue to your destination, <strong>${endStation.name}</strong>.`;
+                journeyParts.push(lastPart);
+                
+                // Add Journey Details
+                journeyHtml += `<div class="bg-gray-900/70 p-4 rounded-lg mt-2"><p class="text-gray-300 text-left md:text-center leading-relaxed text-base md:text-lg">${journeyParts.join(' ')}</p></div>`;
+                
+                // --- FARE CALCULATION & DURATION SECTION ---
+                let fareInfoHtml = '';
+                let totalFare = 0;
+                let fareCalculated = true;
+                
+                if (route.length > 1) {
+                    let journeySegments = [];
+                    let currentSegment = {
+                        line: getLineForSegment(route[0], route[1]),
+                        stations: [route[0]]
+                    };
+
+                    for (let i = 1; i < route.length; i++) {
+                        const segmentLine = getLineForSegment(route[i-1], route[i]);
+                        if (segmentLine === currentSegment.line) {
+                            currentSegment.stations.push(route[i]);
+                        } else {
+                            journeySegments.push(currentSegment);
+                            currentSegment = {
+                                line: segmentLine,
+                                stations: [route[i-1], route[i]]
+                            };
+                        }
+                    }
+                    journeySegments.push(currentSegment);
+
+                    if (journeySegments.length > 0) {
+                        journeySegments.forEach(segment => {
+                            if (segment.line) {
+                                const segmentStartId = segment.stations[0];
+                                const segmentEndId = segment.stations[segment.stations.length - 1];
+                                
+                                const lineName = segment.line.name.toLowerCase().replace(' line', '');
+                                const fareMatrix = lineFareMatrices[lineName];
+                                const startCode = stationIdToCode[segmentStartId];
+                                const endCode = stationIdToCode[segmentEndId];
+
+                                if (fareMatrix && fareMatrix[startCode] && fareMatrix[startCode][endCode] !== undefined) {
+                                    totalFare += fareMatrix[startCode][endCode];
+                                } else if (fareMatrix && fareMatrix[endCode] && fareMatrix[endCode][startCode] !== undefined) {
+                                    totalFare += fareMatrix[endCode][startCode];
+                                } else {
+                                    fareCalculated = false;
+                                }
+                            }
+                        });
+                    } else {
+                        fareCalculated = false;
+                    }
+                } else {
+                    fareCalculated = false;
+                }
+
+                if (fareCalculated && totalFare >= 0) {
+                     fareInfoHtml = `
+                        <div class="mt-4 text-center bg-indigo-950/60 p-4 rounded-lg border border-purple-800/50">
+                            <h4 class="text-lg font-semibold mb-1 text-purple-300">Estimated Fare</h4>
+                            <p class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">₹ ${totalFare.toFixed(2)}</p>
+                        </div>`;
+                }
+                journeyHtml += fareInfoHtml;
+                // --- END OF FARE & DURATION SECTION ---
+
+
+                // --- GATE INFORMATION SECTION ---
+                let gateInfoHtml = '';
+                if (startStation.gates || endStation.gates) {
+                    gateInfoHtml += `<div class="mt-4 text-left bg-indigo-950/60 p-4 rounded-lg border border-purple-800/50">`;
+                    gateInfoHtml += `<h4 class="text-lg font-semibold mb-2 text-purple-300">Gate Information</h4>`;
+
+                    if (startStation.gates) {
+                        gateInfoHtml += `<div class="mb-2"><strong class="text-purple-400">${startStation.name} (Start):</strong><ul class="list-disc list-inside text-gray-400 text-sm pl-2">`;
+                        for (const gateNum in startStation.gates) {
+                            gateInfoHtml += `<li>Gate ${gateNum}: ${startStation.gates[gateNum]}</li>`;
+                        }
+                        gateInfoHtml += `</ul></div>`;
+                    }
+
+                    if (endStation.gates) {
+                        gateInfoHtml += `<div><strong class="text-pink-400">${endStation.name} (Destination):</strong><ul class="list-disc list-inside text-gray-400 text-sm pl-2">`;
+                        for (const gateNum in endStation.gates) {
+                            gateInfoHtml += `<li>Gate ${gateNum}: ${endStation.gates[gateNum]}</li>`;
+                        }
+                        gateInfoHtml += `</ul></div>`;
+                    }
+
+                    gateInfoHtml += `</div>`;
+                }
+                
+                journeyHtml += gateInfoHtml;
+                // --- END OF NEW GATE INFORMATION SECTION ---
+
+                routeDetailsDiv.innerHTML = journeyHtml;
+                
+            }
+        });
+    </script>
+</body>
+</html>
