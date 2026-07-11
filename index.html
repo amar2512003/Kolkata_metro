@@ -62,9 +62,10 @@
                             </div>
                             <div class="w-full">
                                 <label for="startStation" class="block text-xs font-medium text-gray-400">STARTING FROM</label>
-                                <input type="text" id="startStation" placeholder="Search for a station..." class="w-full bg-transparent text-white text-lg font-medium focus:outline-none" autocomplete="off">
+                                <input type="text" id="startStation" placeholder="Search station or landmark..." class="w-full bg-transparent text-white text-lg font-medium focus:outline-none" autocomplete="off">
                             </div>
                         </div>
+                        <div id="startLandmarkNote" class="hidden text-xs text-cyan-400 mt-1 pl-1"></div>
                         <div id="startSuggestions" class="absolute z-10 w-full mt-1 bg-indigo-900 border border-purple-800/50 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden"></div>
                     </div>
                      <!-- End Station -->
@@ -75,9 +76,10 @@
                             </div>
                             <div class="w-full">
                                 <label for="endStation" class="block text-xs font-medium text-gray-400">DESTINATION</label>
-                                 <input type="text" id="endStation" placeholder="Search for a station..." class="w-full bg-transparent text-white text-lg font-medium focus:outline-none" autocomplete="off">
+                                 <input type="text" id="endStation" placeholder="Search station or landmark..." class="w-full bg-transparent text-white text-lg font-medium focus:outline-none" autocomplete="off">
                             </div>
                         </div>
+                        <div id="endLandmarkNote" class="hidden text-xs text-cyan-400 mt-1 pl-1"></div>
                          <div id="endSuggestions" class="absolute z-10 w-full mt-1 bg-indigo-900 border border-purple-800/50 rounded-lg shadow-lg max-h-60 overflow-y-auto hidden"></div>
                     </div>
                 </div>
@@ -137,48 +139,67 @@
                 name: "Blue Line",
                 closedOn: [],
                 weekdays: {
-                    firstTrain: { dakshineswar: '06:55', kavi_subhash: '06:55' },
-                    lastTrain: { dakshineswar: '21:28', kavi_subhash: '21:28' }
+                    firstTrain: { dakshineswar: '07:00', kavi_subhash: '06:50' },
+                    lastTrain: { dakshineswar: '21:28', kavi_subhash: '21:30' }
+                },
+                sundays: {
+                    firstTrain: { dakshineswar: '09:00', kavi_subhash: '09:00' },
+                    lastTrain: { dakshineswar: '21:28', kavi_subhash: '21:30' }
                 },
                 duration: 60,
                 endPoints: ['dakshineswar', 'kavi_subhash'],
-                note: "Few special trains run till 22:30."
+                note: "An extended late-night special departs both ends at 10:00 PM."
             },
             green: {
                 name: "Green Line",
                 closedOn: [],
                 weekdays: {
-                    firstTrain: { howrah_maidan: '06:30', saltlake_sector_v: '06:32' },
-                    lastTrain: { howrah_maidan: '21:45', saltlake_sector_v: '21:47' }
+                    firstTrain: { howrah_maidan: '06:45', saltlake_sector_v: '06:39' },
+                    lastTrain: { howrah_maidan: '21:55', saltlake_sector_v: '21:55' }
                 },
                 sundays: {
                     firstTrain: { howrah_maidan: '09:00', saltlake_sector_v: '09:02' },
-                    lastTrain: { howrah_maidan: '21:45', saltlake_sector_v: '21:47' }
+                    lastTrain: { howrah_maidan: '21:50', saltlake_sector_v: '21:40' }
                 },
                 duration: 32,
-                endPoints: ['howrah_maidan', 'saltlake_sector_v']
+                endPoints: ['howrah_maidan', 'saltlake_sector_v'],
+                note: "An extended late-night service to Central Park leaves Howrah Maidan direction at 10:05 PM on weekdays."
             },
             purple: {
                 name: "Purple Line",
-                closedOn: ['Saturday', 'Sunday'],
-                firstTrain: { majerhat: '07:14', joka: '06:50' },
-                lastTrain: { majerhat: '20:57', joka: '20:36' },
+                closedOn: ['Sunday'],
+                weekdays: {
+                    firstTrain: { joka: '06:40', majerhat: '07:03' },
+                    lastTrain: { joka: '21:05', majerhat: '21:26' }
+                },
+                saturdays: {
+                    firstTrain: { joka: '13:25', majerhat: '13:49' },
+                    lastTrain: { joka: '20:11', majerhat: '20:32' }
+                },
                 duration: 17,
                 endPoints: ['majerhat', 'joka']
             },
             orange: {
                 name: "Orange Line",
                 closedOn: ['Saturday', 'Sunday'],
-                firstTrain: { kavi_subhash: '08:00', beleghata: '08:00' },
-                lastTrain: { kavi_subhash: '20:05', beleghata: '20:05' },
+                weekdays: {
+                    firstTrain: { kavi_subhash: '07:40', beleghata: '08:10' },
+                    lastTrain: { kavi_subhash: '20:20', beleghata: '20:45' }
+                },
                 duration: 23,
                 endPoints: ['kavi_subhash', 'beleghata']
             },
             yellow: {
                 name: "Yellow Line",
                 closedOn: [],
-                firstTrain: { jai_hind: '08:00', noapara: '07:55' },
-                lastTrain: { jai_hind: '20:05', noapara: '20:00' },
+                weekdays: {
+                    firstTrain: { noapara: '07:18', jai_hind: '07:40' },
+                    lastTrain: { noapara: '20:58', jai_hind: '21:18' }
+                },
+                sundays: {
+                    firstTrain: { noapara: '09:18', jai_hind: '09:40' },
+                    lastTrain: { noapara: '20:58', jai_hind: '21:18' }
+                },
                 duration: 12,
                 endPoints: ['jai_hind', 'noapara']
             }
@@ -262,11 +283,44 @@
             joka: [22.4573, 88.3097], iim_calcutta: [22.4520, 88.3010], diamond_park: [22.4480, 88.2950]
         };
 
+        // Curated landmarks — searching by these auto-resolves to the nearest
+        // operational station via haversine distance against stationGeo.
+        const landmarks = [
+            { name: "Victoria Memorial", lat: 22.5448, lng: 88.3426 },
+            { name: "Howrah Bridge", lat: 22.5851, lng: 88.3468 },
+            { name: "Eden Gardens", lat: 22.5646, lng: 88.3433 },
+            { name: "Kalighat Temple", lat: 22.5192, lng: 88.3428 },
+            { name: "Dakshineswar Kali Temple", lat: 22.6547, lng: 88.3577 },
+            { name: "Belur Math", lat: 22.6314, lng: 88.3556 },
+            { name: "New Market", lat: 22.5626, lng: 88.3520 },
+            { name: "Science City", lat: 22.5310, lng: 88.3960 },
+            { name: "South City Mall", lat: 22.4989, lng: 88.3634 },
+            { name: "Nicco Park", lat: 22.5824, lng: 88.4283 },
+            { name: "Salt Lake Stadium (VYBK)", lat: 22.5697, lng: 88.4090 },
+            { name: "Birla Planetarium", lat: 22.5448, lng: 88.3505 },
+            { name: "Indian Museum", lat: 22.5583, lng: 88.3512 },
+            { name: "Prinsep Ghat", lat: 22.5556, lng: 88.3384 },
+            { name: "Tollygunge Club", lat: 22.5010, lng: 88.3480 },
+            { name: "Netaji Subhas Chandra Bose Airport", lat: 22.6547, lng: 88.4467 },
+            { name: "Millennium Park", lat: 22.5701, lng: 88.3390 },
+            { name: "Fort William", lat: 22.5535, lng: 88.3378 },
+            { name: "Marble Palace", lat: 22.5926, lng: 88.3641 },
+            { name: "Nakhoda Mosque", lat: 22.5877, lng: 88.3557 },
+            { name: "St. Paul's Cathedral", lat: 22.5448, lng: 88.3495 },
+            { name: "Acropolis Mall", lat: 22.5090, lng: 88.3960 },
+            { name: "Quest Mall", lat: 22.5350, lng: 88.3630 },
+            { name: "Forum Mall", lat: 22.5380, lng: 88.3630 },
+            { name: "Jadavpur University", lat: 22.4990, lng: 88.3712 },
+            { name: "ISKCON Kolkata", lat: 22.5350, lng: 88.3650 }
+        ];
+
         document.addEventListener('DOMContentLoaded', () => {
             const startStationInput = document.getElementById('startStation');
             const endStationInput = document.getElementById('endStation');
             const startSuggestions = document.getElementById('startSuggestions');
             const endSuggestions = document.getElementById('endSuggestions');
+            const startLandmarkNote = document.getElementById('startLandmarkNote');
+            const endLandmarkNote = document.getElementById('endLandmarkNote');
             const findRouteBtn = document.getElementById('findRouteBtn');
             const routeDetailsDiv = document.getElementById('routeDetails');
             const realMapContainer = document.getElementById('realMapContainer');
@@ -418,16 +472,18 @@
             });
             // ---------- End real-world map ----------
 
-            const createSuggestions = (input, suggestionsContainer) => {
+            const createSuggestions = (input, suggestionsContainer, noteEl) => {
                 const query = input.value.toLowerCase();
                 suggestionsContainer.innerHTML = '';
+                if (noteEl) noteEl.classList.add('hidden');
                 if (!query) {
                     suggestionsContainer.classList.add('hidden');
                     return;
                 }
                 const filteredStations = allStations.filter(station => station.name.toLowerCase().includes(query));
-                
-                if (filteredStations.length > 0) {
+                const filteredLandmarks = landmarks.filter(lm => lm.name.toLowerCase().includes(query));
+
+                if (filteredStations.length > 0 || filteredLandmarks.length > 0) {
                     filteredStations.forEach(station => {
                         const div = document.createElement('div');
                         div.textContent = station.name;
@@ -435,18 +491,39 @@
                         div.addEventListener('click', () => {
                             input.value = station.name;
                             input.dataset.stationId = station.id;
+                            if (noteEl) noteEl.classList.add('hidden');
                             suggestionsContainer.classList.add('hidden');
                         });
                         suggestionsContainer.appendChild(div);
                     });
+
+                    filteredLandmarks.forEach(lm => {
+                        const { station, distanceKm } = findNearestStation(lm.lat, lm.lng);
+                        const div = document.createElement('div');
+                        div.className = 'p-3 hover:bg-indigo-800/60 cursor-pointer border-t border-purple-900/40';
+                        div.innerHTML = `<div class="flex items-center gap-2 text-gray-100"><span>📍</span><span>${lm.name}</span></div>` +
+                            (station ? `<div class="text-xs text-cyan-400 pl-6 mt-0.5">→ nearest station: ${station.name} (${distanceKm.toFixed(1)} km)</div>` : `<div class="text-xs text-gray-500 pl-6 mt-0.5">No nearby station found</div>`);
+                        div.addEventListener('click', () => {
+                            if (!station) return;
+                            input.value = lm.name;
+                            input.dataset.stationId = station.id;
+                            if (noteEl) {
+                                noteEl.textContent = `📍 Resolved to ${station.name} — approx. ${distanceKm.toFixed(1)} km away`;
+                                noteEl.classList.remove('hidden');
+                            }
+                            suggestionsContainer.classList.add('hidden');
+                        });
+                        suggestionsContainer.appendChild(div);
+                    });
+
                     suggestionsContainer.classList.remove('hidden');
                 } else {
                     suggestionsContainer.classList.add('hidden');
                 }
             };
 
-            startStationInput.addEventListener('input', () => createSuggestions(startStationInput, startSuggestions));
-            endStationInput.addEventListener('input', () => createSuggestions(endStationInput, endSuggestions));
+            startStationInput.addEventListener('input', () => createSuggestions(startStationInput, startSuggestions, startLandmarkNote));
+            endStationInput.addEventListener('input', () => createSuggestions(endStationInput, endSuggestions, endLandmarkNote));
             
             document.addEventListener('click', (e) => {
                 if (!startStationInput.contains(e.target)) startSuggestions.classList.add('hidden');
@@ -562,7 +639,7 @@
                 let journeyHtml = `<h3 class="text-xl font-semibold mb-3 text-white">Your Journey Simplified</h3>`;
                 let journeyParts = [];
 
-                // --- NEW SERVICE ALERT SECTION ---
+                // --- SERVICE ALERT SECTION ---
                 const now = new Date();
                 const currentDay = now.toLocaleString('en-US', { weekday: 'long' });
                 const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
@@ -579,12 +656,15 @@
                 linesInRoute.forEach(lineKey => {
                     const timetable = lineTimetables[lineKey];
                     if (timetable) {
+                        // Pick the correct schedule for today: Sunday > Saturday > weekdays
                         let schedule;
-                        if (timetable.weekdays && timetable.sundays) { // For lines with different schedules
-                            schedule = (currentDay === 'Sunday') ? timetable.sundays : timetable.weekdays;
-                        } else if (timetable.weekdays) { // For lines with one schedule
-                             schedule = timetable.weekdays;
-                        } else { // For old structures
+                        if (currentDay === 'Sunday' && timetable.sundays) {
+                            schedule = timetable.sundays;
+                        } else if (currentDay === 'Saturday' && timetable.saturdays) {
+                            schedule = timetable.saturdays;
+                        } else if (timetable.weekdays) {
+                            schedule = timetable.weekdays;
+                        } else {
                             schedule = timetable;
                         }
 
@@ -605,11 +685,14 @@
                                 const lastTrainTime = schedule.lastTrain[travelStartPoint];
                                 const lastTrainNote = timetable.note ? ` (${timetable.note})` : '';
 
-                                if(firstTrainTime && currentTime < firstTrainTime) {
-                                    serviceAlertHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-2 text-yellow-300"><strong>Timing Alert:</strong> The first train on the ${timetable.name} from your direction starts at ${firstTrainTime}.</div>`;
-                                }
-                                if (lastTrainTime && currentTime > lastTrainTime) {
-                                     serviceAlertHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-2 text-yellow-300"><strong>Timing Alert:</strong> The last train on the ${timetable.name} from your direction may have departed at ${lastTrainTime}${lastTrainNote}.</div>`;
+                                if (firstTrainTime && lastTrainTime) {
+                                    if (currentTime < firstTrainTime) {
+                                        serviceAlertHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-2 text-yellow-300"><strong>Timing Alert:</strong> The first train on the ${timetable.name} from your direction starts at ${firstTrainTime}.</div>`;
+                                    } else if (currentTime > lastTrainTime) {
+                                        serviceAlertHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-2 text-yellow-300"><strong>Timing Alert:</strong> The last train on the ${timetable.name} from your direction may have departed at ${lastTrainTime}${lastTrainNote}.</div>`;
+                                    } else {
+                                        serviceAlertHtml += `<div class="bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-2 text-green-300"><strong>Metro Available:</strong> The ${timetable.name} is currently running (service window ${firstTrainTime} – ${lastTrainTime}).</div>`;
+                                    }
                                 }
                             }
                         }
