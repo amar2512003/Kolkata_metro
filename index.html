@@ -32,14 +32,204 @@
         }
         .leaflet-popup-content-wrapper { background: #1e1b4b; color: #e5e7eb; border-radius: 8px; }
         .leaflet-popup-tip { background: #1e1b4b; }
+
+        /* ---------- Intro / loading screen ---------- */
+        #intro-screen {
+            background: radial-gradient(ellipse at 50% 30%, #2a2470 0%, #14123a 55%, #0a0918 100%);
+            overflow: hidden;
+        }
+        .intro-stars {
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.5) 0%, transparent 100%),
+                radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.4) 0%, transparent 100%),
+                radial-gradient(1.5px 1.5px at 40% 80%, rgba(255,255,255,0.35) 0%, transparent 100%),
+                radial-gradient(1px 1px at 85% 20%, rgba(255,255,255,0.4) 0%, transparent 100%),
+                radial-gradient(1.5px 1.5px at 55% 15%, rgba(255,255,255,0.3) 0%, transparent 100%),
+                radial-gradient(1px 1px at 10% 65%, rgba(255,255,255,0.3) 0%, transparent 100%);
+            background-repeat: repeat;
+            background-size: 300px 300px;
+            opacity: 0.6;
+            animation: twinkle 3s ease-in-out infinite alternate;
+        }
+        @keyframes twinkle {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.7; }
+        }
+        .intro-track-wrap {
+            position: relative;
+            width: min(92vw, 640px);
+            height: 130px;
+        }
+        .intro-rail {
+            position: absolute;
+            left: 0; right: 0; bottom: 22px;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, rgba(168,85,247,0.15), rgba(168,85,247,0.55), rgba(236,72,153,0.55), rgba(168,85,247,0.15));
+            box-shadow: 0 0 12px rgba(168,85,247,0.4);
+        }
+        .intro-rail::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.35) 0 6px, transparent 6px 16px);
+            border-radius: 3px;
+        }
+        .intro-sleeper-row {
+            position: absolute;
+            left: 0; right: 0; bottom: 14px;
+            height: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .intro-sleeper {
+            width: 3px;
+            height: 10px;
+            background: rgba(165,180,252,0.25);
+            border-radius: 1px;
+        }
+        .intro-station-dot {
+            position: absolute;
+            bottom: 16px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid rgba(15,12,40,0.9);
+            box-shadow: 0 0 10px currentColor;
+            opacity: 0.35;
+            transform: translateX(-50%);
+            transition: opacity 0.25s ease;
+        }
+        .intro-station-dot.lit { opacity: 1; }
+        .intro-train {
+            position: absolute;
+            bottom: 20px;
+            left: -18%;
+            width: 15%;
+            min-width: 90px;
+            animation: intro-move 2.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+            filter: drop-shadow(0 4px 10px rgba(219, 39, 119, 0.45));
+        }
+        @keyframes intro-move {
+            0%   { left: -18%; }
+            92%  { left: 103%; }
+            100% { left: 103%; }
+        }
+        .intro-headlight-glow {
+            animation: headlight-pulse 1s ease-in-out infinite alternate;
+        }
+        @keyframes headlight-pulse {
+            0% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .intro-smoke {
+            animation: smoke-rise 2.6s ease-out infinite;
+            transform-origin: center;
+        }
+        @keyframes smoke-rise {
+            0%   { opacity: 0; transform: translateY(0) scale(0.4); }
+            15%  { opacity: 0.5; }
+            100% { opacity: 0; transform: translateY(-22px) scale(1.4); }
+        }
+        .intro-title-anim {
+            animation: intro-title-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+            animation-delay: 0.15s;
+        }
+        .intro-subtitle-anim {
+            animation: intro-title-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+            animation-delay: 0.4s;
+        }
+        @keyframes intro-title-in {
+            0%   { opacity: 0; transform: translateY(14px); letter-spacing: 0.15em; }
+            100% { opacity: 1; transform: translateY(0); letter-spacing: normal; }
+        }
+        .intro-progress-track {
+            width: min(70vw, 280px);
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(165, 180, 252, 0.15);
+            overflow: hidden;
+        }
+        .intro-progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, #3b82f6, #22c55e, #f97316, #a855f7, #eab308);
+            animation: intro-progress 2.4s ease-in-out forwards;
+            animation-delay: 0.2s;
+        }
+        @keyframes intro-progress {
+            0%   { width: 0%; }
+            100% { width: 100%; }
+        }
     </style>
 </head>
 <body class="text-gray-200">
     <!-- Intro Screen -->
     <div id="intro-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-indigo-950 transition-opacity duration-1000 ease-in-out">
-        <svg class="w-20 h-20 text-purple-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.5 12.5L12 11.5l-3.5 3V9.5h7v5zM8 8H6V6h2v2zm10 0h-2V6h2v2z"/></svg>
-        <h2 class="text-3xl font-bold text-white mt-4 animate-pulse">Kolkata Metro Guide</h2>
-        <p class="text-purple-300 mt-2">Loading Your Journey Planner...</p>
+        <div class="intro-stars"></div>
+
+        <div class="relative z-10 flex flex-col items-center">
+            <h2 class="intro-title-anim text-3xl md:text-4xl font-bold text-white tracking-tight text-center px-4">Kolkata Metro Guide</h2>
+            <p class="intro-subtitle-anim text-purple-300 mt-2 text-sm md:text-base text-center px-4">Charting your next journey across the city...</p>
+        </div>
+
+        <div class="intro-track-wrap mt-8 relative z-10">
+            <!-- Station dots along the line, colored per metro line -->
+            <div class="intro-station-dot lit" style="left:6%; color:#3b82f6; background:#3b82f6; animation: dot-pulse 2.6s ease-in-out infinite; animation-delay:0s;"></div>
+            <div class="intro-station-dot lit" style="left:27%; color:#22c55e; background:#22c55e; animation: dot-pulse 2.6s ease-in-out infinite; animation-delay:0.4s;"></div>
+            <div class="intro-station-dot lit" style="left:50%; color:#f97316; background:#f97316; animation: dot-pulse 2.6s ease-in-out infinite; animation-delay:0.8s;"></div>
+            <div class="intro-station-dot lit" style="left:73%; color:#a855f7; background:#a855f7; animation: dot-pulse 2.6s ease-in-out infinite; animation-delay:1.2s;"></div>
+            <div class="intro-station-dot lit" style="left:94%; color:#eab308; background:#eab308; animation: dot-pulse 2.6s ease-in-out infinite; animation-delay:1.6s;"></div>
+
+            <div class="intro-sleeper-row">
+                <div class="intro-sleeper" style="margin-left:2%"></div>
+                <div class="intro-sleeper"></div>
+                <div class="intro-sleeper"></div>
+                <div class="intro-sleeper"></div>
+                <div class="intro-sleeper"></div>
+                <div class="intro-sleeper"></div>
+                <div class="intro-sleeper"></div>
+                <div class="intro-sleeper"></div>
+                <div class="intro-sleeper"></div>
+                <div class="intro-sleeper" style="margin-right:2%"></div>
+            </div>
+            <div class="intro-rail"></div>
+
+            <!-- Animated train -->
+            <svg class="intro-train" viewBox="0 0 200 90" xmlns="http://www.w3.org/2000/svg">
+                <ellipse class="intro-smoke" cx="34" cy="18" rx="7" ry="6" fill="#c7d2fe" />
+                <ellipse class="intro-smoke" cx="30" cy="14" rx="5" ry="4" fill="#e0e7ff" style="animation-delay:0.6s" />
+                <rect x="8" y="30" width="184" height="42" rx="12" fill="url(#introTrainBody)" />
+                <rect x="8" y="30" width="184" height="10" rx="5" fill="#ffffff" fill-opacity="0.18" />
+                <rect x="24" y="40" width="26" height="18" rx="3" fill="#0e0b2e" fill-opacity="0.85" />
+                <rect x="58" y="40" width="26" height="18" rx="3" fill="#0e0b2e" fill-opacity="0.85" />
+                <rect x="92" y="40" width="26" height="18" rx="3" fill="#0e0b2e" fill-opacity="0.85" />
+                <rect x="126" y="40" width="26" height="18" rx="3" fill="#0e0b2e" fill-opacity="0.85" />
+                <circle class="intro-headlight-glow" cx="184" cy="51" r="7" fill="#fef08a" />
+                <circle cx="184" cy="51" r="3.5" fill="#fffbeb" />
+                <rect x="0" y="26" width="14" height="12" rx="4" fill="#a855f7" />
+                <circle cx="40" cy="76" r="9" fill="#1e1b4b" stroke="#a5b4fc" stroke-width="2" />
+                <circle cx="40" cy="76" r="3" fill="#a5b4fc" />
+                <circle cx="96" cy="76" r="9" fill="#1e1b4b" stroke="#a5b4fc" stroke-width="2" />
+                <circle cx="96" cy="76" r="3" fill="#a5b4fc" />
+                <circle cx="152" cy="76" r="9" fill="#1e1b4b" stroke="#a5b4fc" stroke-width="2" />
+                <circle cx="152" cy="76" r="3" fill="#a5b4fc" />
+                <defs>
+                    <linearGradient id="introTrainBody" x1="0" y1="0" x2="200" y2="0" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#9333ea" />
+                        <stop offset="55%" stop-color="#c026d3" />
+                        <stop offset="100%" stop-color="#db2777" />
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+
+        <div class="intro-progress-track mt-8 relative z-10">
+            <div class="intro-progress-fill"></div>
+        </div>
     </div>
 
     <div id="main-content" class="hidden">
@@ -131,7 +321,7 @@
                 introScreen.classList.add('opacity-0', 'pointer-events-none');
                 mainContent.classList.remove('hidden');
                 document.dispatchEvent(new Event('metroAppVisible'));
-            }, 2500); // 2.5-second intro
+            }, 2700); // slightly longer to let the train animation land
         });
 
         const metroData = {
