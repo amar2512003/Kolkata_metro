@@ -92,6 +92,15 @@
                 </div>
             </div>
     
+            <!-- Live Line Status -->
+            <div class="glass-card rounded-xl p-5 w-full max-w-5xl mb-8">
+                <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+                    <h3 class="text-lg font-semibold text-white">Live Line Status</h3>
+                    <span id="liveStatusClock" class="text-xs text-gray-400"></span>
+                </div>
+                <div id="liveLineStatusGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3"></div>
+            </div>
+
             <!-- Map and Route Details Container -->
             <div id="route-display" class="glass-card rounded-xl p-2 sm:p-4 w-full max-w-5xl">
                 <div class="flex items-center justify-end gap-3 mb-3 px-1 flex-wrap">
@@ -134,76 +143,161 @@
             pink: { name: 'Pink Line', color: '#ec4899', stations: [ { id: 'baranagar', name: 'Baranagar', interchange: ['blue'], status: 'under-construction' }, { id: 'krishna_kali', name: 'Krishna Kali', status: 'under-construction' }, { id: 'acharya_prafulla_chandra', name: 'Acharya Prafulla Chandra', status: 'under-construction' }, { id: 'gandhi_ashram', name: 'Gandhi Ashram', status: 'under-construction' }, { id: 'sarat_chandra', name: 'Sarat Chandra', status: 'under-construction' }, { id: 'subhash_nagar', name: 'Subhash Nagar', status: 'under-construction' }, { id: 'rishi_bankim', name: 'Rishi Bankim', status: 'under-construction' }, { id: 'dr_rajendra_prasad', name: 'Dr Rajendra Prasad', status: 'under-construction' }, { id: 'shaw_nawaz_khan', name: 'Shaw Nawaz Khan', status: 'under-construction' }, { id: 'talpukur', name: 'Talpukur', status: 'under-construction' }, { id: 'barrackpore', name: 'Barrackpore', status: 'under-construction' } ] }
         };
 
+        // Direction-aware, day-type-aware timetables.
+        // Each schedule entry describes one direction of travel (from -> to)
+        // with its first/last train time (24h "HH:MM") plus an optional note
+        // (e.g. late-night extended specials). "closedOn" lists weekday names
+        // (as returned by Date.toLocaleString('en-US',{weekday:'long'})) on
+        // which the line does not run at all that day.
         const lineTimetables = {
             blue: {
                 name: "Blue Line",
                 closedOn: [],
-                weekdays: {
-                    firstTrain: { dakshineswar: '07:00', kavi_subhash: '06:50' },
-                    lastTrain: { dakshineswar: '21:28', kavi_subhash: '21:30' }
-                },
-                sundays: {
-                    firstTrain: { dakshineswar: '09:00', kavi_subhash: '09:00' },
-                    lastTrain: { dakshineswar: '21:28', kavi_subhash: '21:30' }
-                },
-                duration: 60,
-                endPoints: ['dakshineswar', 'kavi_subhash'],
-                note: "An extended late-night special departs both ends at 10:00 PM."
+                schedules: {
+                    weekday: [ // Monday–Saturday (Saturday follows the same pattern as weekdays)
+                        { from: 'dumdum', to: 'kavi_subhash', first: '06:50', last: '21:40', lastNote: 'Extended late-night special departs 22:00' },
+                        { from: 'kavi_subhash', to: 'dakshineswar', first: '06:50', last: '21:30', lastNote: 'Extended late-night special departs 22:00' },
+                        { from: 'dumdum', to: 'dakshineswar', first: '06:55', last: '21:30', lastNote: 'Extended late-night special departs 22:00' },
+                        { from: 'dakshineswar', to: 'kavi_subhash', first: '07:00', last: '21:28', lastNote: 'Extended late-night special departs 22:00' }
+                    ],
+                    sunday: [
+                        { from: 'dumdum', to: 'kavi_subhash', first: '09:00', last: '21:40', lastNote: 'Extended late-night special departs 22:00' },
+                        { from: 'kavi_subhash', to: 'dakshineswar', first: '09:00', last: '21:30', lastNote: 'Extended late-night special departs 22:00' },
+                        { from: 'dumdum', to: 'dakshineswar', first: '09:00', last: '21:30', lastNote: 'Extended late-night special departs 22:00' },
+                        { from: 'dakshineswar', to: 'kavi_subhash', first: '09:00', last: '21:28', lastNote: 'Extended late-night special departs 22:00' }
+                    ]
+                }
             },
             green: {
                 name: "Green Line",
                 closedOn: [],
-                weekdays: {
-                    firstTrain: { howrah_maidan: '06:45', saltlake_sector_v: '06:39' },
-                    lastTrain: { howrah_maidan: '21:55', saltlake_sector_v: '21:55' }
-                },
-                sundays: {
-                    firstTrain: { howrah_maidan: '09:00', saltlake_sector_v: '09:02' },
-                    lastTrain: { howrah_maidan: '21:50', saltlake_sector_v: '21:40' }
-                },
-                duration: 32,
-                endPoints: ['howrah_maidan', 'saltlake_sector_v'],
-                note: "An extended late-night service to Central Park leaves Howrah Maidan direction at 10:05 PM on weekdays."
-            },
-            purple: {
-                name: "Purple Line",
-                closedOn: ['Sunday'],
-                weekdays: {
-                    firstTrain: { joka: '06:40', majerhat: '07:03' },
-                    lastTrain: { joka: '21:05', majerhat: '21:26' }
-                },
-                saturdays: {
-                    firstTrain: { joka: '13:25', majerhat: '13:49' },
-                    lastTrain: { joka: '20:11', majerhat: '20:32' }
-                },
-                duration: 17,
-                endPoints: ['majerhat', 'joka']
+                schedules: {
+                    weekday: [ // Monday–Saturday
+                        { from: 'saltlake_sector_v', to: 'howrah_maidan', first: '06:39', last: '21:55' },
+                        { from: 'howrah_maidan', to: 'saltlake_sector_v', first: '06:45', last: '21:55', lastNote: 'Extended service to Central Park departs 22:05' }
+                    ],
+                    sunday: [
+                        { from: 'saltlake_sector_v', to: 'howrah_maidan', first: '09:02', last: '21:40' },
+                        { from: 'howrah_maidan', to: 'saltlake_sector_v', first: '09:00', last: '21:50' }
+                    ]
+                }
             },
             orange: {
                 name: "Orange Line",
                 closedOn: ['Saturday', 'Sunday'],
-                weekdays: {
-                    firstTrain: { kavi_subhash: '07:40', beleghata: '08:10' },
-                    lastTrain: { kavi_subhash: '20:20', beleghata: '20:45' }
-                },
-                duration: 23,
-                endPoints: ['kavi_subhash', 'beleghata']
+                schedules: {
+                    weekday: [ // Monday–Friday only
+                        { from: 'kavi_subhash', to: 'beleghata', first: '07:40', last: '20:20' },
+                        { from: 'beleghata', to: 'kavi_subhash', first: '08:10', last: '20:45' }
+                    ]
+                }
+            },
+            purple: {
+                name: "Purple Line",
+                closedOn: ['Sunday'],
+                schedules: {
+                    weekday: [ // Monday–Friday
+                        { from: 'joka', to: 'majerhat', first: '06:40', last: '21:05' },
+                        { from: 'majerhat', to: 'joka', first: '07:03', last: '21:26' }
+                    ],
+                    saturday: [
+                        { from: 'joka', to: 'majerhat', first: '13:25', last: '20:11' },
+                        { from: 'majerhat', to: 'joka', first: '13:49', last: '20:32' }
+                    ]
+                }
             },
             yellow: {
                 name: "Yellow Line",
                 closedOn: [],
-                weekdays: {
-                    firstTrain: { noapara: '07:18', jai_hind: '07:40' },
-                    lastTrain: { noapara: '20:58', jai_hind: '21:18' }
-                },
-                sundays: {
-                    firstTrain: { noapara: '09:18', jai_hind: '09:40' },
-                    lastTrain: { noapara: '20:58', jai_hind: '21:18' }
-                },
-                duration: 12,
-                endPoints: ['jai_hind', 'noapara']
+                schedules: {
+                    weekday: [ // Monday–Friday
+                        { from: 'noapara', to: 'jai_hind', first: '07:18', last: '20:58' },
+                        { from: 'jai_hind', to: 'noapara', first: '07:40', last: '21:18' }
+                    ],
+                    saturday: [
+                        { from: 'noapara', to: 'jai_hind', first: '07:18', last: '20:58' },
+                        { from: 'jai_hind', to: 'noapara', first: '07:40', last: '21:18' }
+                    ],
+                    sunday: [
+                        { from: 'noapara', to: 'jai_hind', first: '09:18', last: '20:58' },
+                        { from: 'jai_hind', to: 'noapara', first: '09:40', last: '21:18' }
+                    ]
+                }
             }
         };
+
+        // ---- Schedule helper functions (pure, no DOM) ----
+        function getDayType(date) {
+            const dayName = date.toLocaleString('en-US', { weekday: 'long' });
+            return { dayName, isSunday: dayName === 'Sunday', isSaturday: dayName === 'Saturday' };
+        }
+
+        function getScheduleForDay(lineKey, date) {
+            const line = lineTimetables[lineKey];
+            if (!line) return { closed: false, entries: null, dayName: null };
+            const { dayName, isSunday, isSaturday } = getDayType(date);
+            if (line.closedOn.includes(dayName)) return { closed: true, entries: null, dayName };
+            let key = 'weekday';
+            if (isSunday) key = line.schedules.sunday ? 'sunday' : 'weekday';
+            else if (isSaturday) key = line.schedules.saturday ? 'saturday' : 'weekday';
+            return { closed: false, entries: line.schedules[key] || null, dayName };
+        }
+
+        function stationIndexInLine(lineKey, stationId) {
+            const line = metroData[lineKey];
+            if (!line) return -1;
+            return line.stations.findIndex(s => s.id === stationId);
+        }
+
+        // Picks the timetable entry that best matches the direction of travel
+        // between segStartId and segEndId along the given line.
+        function pickScheduleEntry(entries, lineKey, segStartId, segEndId) {
+            if (!entries || entries.length === 0) return null;
+            const exact = entries.find(e => e.from === segStartId && e.to === segEndId);
+            if (exact) return exact;
+            const startIdx = stationIndexInLine(lineKey, segStartId);
+            const endIdx = stationIndexInLine(lineKey, segEndId);
+            if (startIdx === -1 || endIdx === -1) return entries[0];
+            const forward = startIdx < endIdx;
+            const sameDirection = entries.filter(e => {
+                const fi = stationIndexInLine(lineKey, e.from);
+                const ti = stationIndexInLine(lineKey, e.to);
+                if (fi === -1 || ti === -1) return false;
+                return forward ? fi < ti : fi > ti;
+            });
+            return sameDirection.length ? sameDirection[0] : entries[0];
+        }
+
+        // Computes live status for a line, optionally for a specific direction
+        // (segStartId -> segEndId). Falls back to the line's first two
+        // endpoints when no direction is given.
+        function computeLineStatus(lineKey, date, segStartId, segEndId) {
+            const line = lineTimetables[lineKey];
+            const meta = metroData[lineKey];
+            if (!line || !meta) return null;
+            const { closed, entries, dayName } = getScheduleForDay(lineKey, date);
+            if (closed) return { status: 'closed', lineName: line.name, dayName };
+            const fromId = segStartId || meta.stations[0].id;
+            const toId = segEndId || meta.stations[meta.stations.length - 1].id;
+            const entry = pickScheduleEntry(entries, lineKey, fromId, toId);
+            if (!entry) return { status: 'unknown', lineName: line.name, dayName };
+            const nowStr = date.toTimeString().slice(0, 5);
+            if (nowStr < entry.first) {
+                return { status: 'before-first', lineName: line.name, dayName, entry, nowStr };
+            }
+            if (entry.last && nowStr > entry.last) {
+                return { status: 'after-last', lineName: line.name, dayName, entry, nowStr };
+            }
+            return { status: 'available', lineName: line.name, dayName, entry, nowStr };
+        }
+
+        function to12Hour(hhmm) {
+            if (!hhmm) return '';
+            const [h, m] = hhmm.split(':').map(Number);
+            const period = h >= 12 ? 'PM' : 'AM';
+            const h12 = h % 12 === 0 ? 12 : h % 12;
+            return `${h12}:${String(m).padStart(2, '0')} ${period}`;
+        }
 
         const stationIdToCode = {
             dakshineswar: 'KDSW', baranagar: 'KBAR', noapara: 'KNAP', dumdum: 'KDMI', belgachia: 'KBEL', shyambazar: 'KSHY', shobhabazar: 'KSHO', girish_park: 'KGPK', mg_road: 'KMHR', central: 'KCEN', chandni_chowk: 'KCWC', esplanade: 'KESP', park_street: 'KPSK', maidan: 'KMDI', rabindra_sadan: 'KRSD', netaji_bhawan: 'KNBN', jatin_das_park: 'KJPK', kalighat: 'KKHG', rabindra_sarobar: 'KRSB', mahanayak_uttam_kumar: 'KMUK', netaji: 'KNTJ', masterda_surya_sen: 'KMSN', gitanjali: 'KGTN', kavi_nazrul: 'KKNZ', shahid_khudiram: 'KSKD', kavi_subhash: 'KKVS', saltlake_sector_v: 'SVSA', karunamoyee: 'KESA', central_park: 'CPSA', city_center: 'CCSC', bengal_chemical: 'BCSD', saltlake_stadium: 'SSSA', phoolbagan: 'PBGB', sealdah: 'SDHM', howrah_maidan: 'HWWM', howrah: 'HWHM', mahakaran: 'MKNA', joka: 'KJKA', thakur_pukur: 'KTKP', sakher_bazar: 'KSKB', behala_chowrasta: 'KBCR', behala_bazar: 'KBBR', taratala: 'KTRT', majerhat: 'KMJH', satyajit_ray: 'KSJR', jyotirindra_nandi: 'KJNN', kavi_sukanta: 'KKSK', hemanta_mukhopadhyay: 'KHMD', vip_bazar: 'KVIB', ritwik_ghatak: 'KRWG', barun_sengupta: 'KBST', beleghata: 'KBGA', dumdum_cantonment: 'KDDC', jessore_road: 'KJSR', jai_hind: 'KJAI'
@@ -288,30 +382,204 @@
         const landmarks = [
             { name: "Victoria Memorial", lat: 22.5448, lng: 88.3426 },
             { name: "Howrah Bridge", lat: 22.5851, lng: 88.3468 },
-            { name: "Eden Gardens", lat: 22.5646, lng: 88.3433 },
-            { name: "Kalighat Temple", lat: 22.5192, lng: 88.3428 },
             { name: "Dakshineswar Kali Temple", lat: 22.6547, lng: 88.3577 },
+            { name: "Kalighat Kali Temple", lat: 22.5192, lng: 88.3428 },
             { name: "Belur Math", lat: 22.6314, lng: 88.3556 },
-            { name: "New Market", lat: 22.5626, lng: 88.3520 },
-            { name: "Science City", lat: 22.5310, lng: 88.3960 },
-            { name: "South City Mall", lat: 22.4989, lng: 88.3634 },
-            { name: "Nicco Park", lat: 22.5824, lng: 88.4283 },
-            { name: "Salt Lake Stadium (VYBK)", lat: 22.5697, lng: 88.4090 },
-            { name: "Birla Planetarium", lat: 22.5448, lng: 88.3505 },
             { name: "Indian Museum", lat: 22.5583, lng: 88.3512 },
-            { name: "Prinsep Ghat", lat: 22.5556, lng: 88.3384 },
-            { name: "Tollygunge Club", lat: 22.5010, lng: 88.3480 },
-            { name: "Netaji Subhas Chandra Bose Airport", lat: 22.6547, lng: 88.4467 },
-            { name: "Millennium Park", lat: 22.5701, lng: 88.3390 },
-            { name: "Fort William", lat: 22.5535, lng: 88.3378 },
+            { name: "Science City", lat: 22.531, lng: 88.396 },
+            { name: "Eco Park", lat: 22.6053, lng: 88.4672 },
+            { name: "Birla Planetarium", lat: 22.5448, lng: 88.3505 },
             { name: "Marble Palace", lat: 22.5926, lng: 88.3641 },
-            { name: "Nakhoda Mosque", lat: 22.5877, lng: 88.3557 },
+            { name: "Prinsep Ghat", lat: 22.5556, lng: 88.3384 },
+            { name: "Park Street", lat: 22.5511, lng: 88.352 },
+            { name: "College Street", lat: 22.575, lng: 88.363 },
+            { name: "New Market", lat: 22.5626, lng: 88.352 },
+            { name: "Alipore Zoological Gardens", lat: 22.5423, lng: 88.3323 },
+            { name: "South Park Street Cemetery", lat: 22.552, lng: 88.353 },
+            { name: "Jorasanko Thakurbari", lat: 22.589, lng: 88.363 },
+            { name: "Fort William", lat: 22.5535, lng: 88.3378 },
             { name: "St. Paul's Cathedral", lat: 22.5448, lng: 88.3495 },
-            { name: "Acropolis Mall", lat: 22.5090, lng: 88.3960 },
-            { name: "Quest Mall", lat: 22.5350, lng: 88.3630 },
-            { name: "Forum Mall", lat: 22.5380, lng: 88.3630 },
-            { name: "Jadavpur University", lat: 22.4990, lng: 88.3712 },
-            { name: "ISKCON Kolkata", lat: 22.5350, lng: 88.3650 }
+            { name: "Eden Gardens", lat: 22.5646, lng: 88.3433 },
+            { name: "Salt Lake Stadium", lat: 22.5697, lng: 88.409 },
+            { name: "Millennium Park", lat: 22.5701, lng: 88.339 },
+            { name: "Kumartuli", lat: 22.5975, lng: 88.366 },
+            { name: "Birla Temple", lat: 22.5335, lng: 88.3495 },
+            { name: "National Library of India", lat: 22.535, lng: 88.331 },
+            { name: "Acharya Jagadish Chandra Bose Indian Botanic Garden", lat: 22.557, lng: 88.301 },
+            { name: "Rabindra Sarobar", lat: 22.509, lng: 88.3568 },
+            { name: "Sabarna Sangrahashala", lat: 22.487, lng: 88.313 },
+            { name: "Netaji Bhawan", lat: 22.534, lng: 88.3512 },
+            { name: "Academy of Fine Arts", lat: 22.5465, lng: 88.351 },
+            { name: "Nandan", lat: 22.5445, lng: 88.35 },
+            { name: "Writer's Building", lat: 22.572, lng: 88.35 },
+            { name: "Raj Bhavan", lat: 22.5645, lng: 88.348 },
+            { name: "High Court of Calcutta", lat: 22.5665, lng: 88.348 },
+            { name: "General Post Office", lat: 22.5735, lng: 88.349 },
+            { name: "Shaheed Minar", lat: 22.559, lng: 88.351 },
+            { name: "Town Hall", lat: 22.56, lng: 88.345 },
+            { name: "Metcalfe Hall", lat: 22.575, lng: 88.345 },
+            { name: "Currency Building", lat: 22.574, lng: 88.347 },
+            { name: "Nicco Park", lat: 22.5824, lng: 88.4283 },
+            { name: "Aquatica Water Park", lat: 22.602, lng: 88.452 },
+            { name: "Snow Park", lat: 22.585, lng: 88.47 },
+            { name: "Biswa Bangla Gate", lat: 22.585, lng: 88.468 },
+            { name: "Tram Museum Smaranika", lat: 22.539, lng: 88.35 },
+            { name: "Rail Museum Howrah", lat: 22.583, lng: 88.342 },
+            { name: "Maritime Museum", lat: 22.565, lng: 88.34 },
+            { name: "Police Museum Kolkata", lat: 22.572, lng: 88.35 },
+            { name: "State Archaeological Museum", lat: 22.499, lng: 88.317 },
+            { name: "Gurusaday Museum", lat: 22.467, lng: 88.303 },
+            { name: "Nehru Children's Museum", lat: 22.562, lng: 88.351 },
+            { name: "Birla Industrial and Technological Museum", lat: 22.533, lng: 88.35 },
+            { name: "Mallick Ghat Flower Market", lat: 22.584, lng: 88.346 },
+            { name: "Tiretta Bazaar", lat: 22.576, lng: 88.351 },
+            { name: "Tangra Chinatown", lat: 22.535, lng: 88.395 },
+            { name: "Burrabazar", lat: 22.578, lng: 88.348 },
+            { name: "Gariahat Market", lat: 22.519, lng: 88.366 },
+            { name: "Hatibagan Market", lat: 22.598, lng: 88.372 },
+            { name: "Dakshinapan Shopping Complex", lat: 22.509, lng: 88.367 },
+            { name: "South City Mall", lat: 22.4989, lng: 88.3634 },
+            { name: "Quest Mall", lat: 22.535, lng: 88.363 },
+            { name: "Mani Square Mall", lat: 22.567, lng: 88.396 },
+            { name: "City Centre 1 Salt Lake", lat: 22.587, lng: 88.416 },
+            { name: "City Centre 2 New Town", lat: 22.58, lng: 88.47 },
+            { name: "Forum Courtyard", lat: 22.538, lng: 88.363 },
+            { name: "Acropolis Mall", lat: 22.509, lng: 88.396 },
+            { name: "Axis Mall", lat: 22.529, lng: 88.397 },
+            { name: "Avani Riverside Mall", lat: 22.595, lng: 88.313 },
+            { name: "Lake Mall", lat: 22.506, lng: 88.352 },
+            { name: "Salt Lake Sector V", lat: 22.5726, lng: 88.4338 },
+            { name: "Dacres Lane", lat: 22.562, lng: 88.35 },
+            { name: "Camac Street", lat: 22.544, lng: 88.356 },
+            { name: "St. John's Church", lat: 22.571, lng: 88.347 },
+            { name: "Nakhoda Masjid", lat: 22.5877, lng: 88.3557 },
+            { name: "Tipu Sultan Mosque", lat: 22.571, lng: 88.351 },
+            { name: "Pareshnath Jain Temple", lat: 22.604, lng: 88.38 },
+            { name: "ISKCON Temple Kolkata", lat: 22.535, lng: 88.365 },
+            { name: "Mother House", lat: 22.546, lng: 88.355 },
+            { name: "Thanthania Kalibari", lat: 22.57, lng: 88.366 },
+            { name: "Firingi Kalibari", lat: 22.5195, lng: 88.3435 },
+            { name: "Lake Kalibari", lat: 22.509, lng: 88.36 },
+            { name: "Karunamoyee Kali Temple", lat: 22.6, lng: 88.42 },
+            { name: "Adyapith Temple", lat: 22.66, lng: 88.36 },
+            { name: "Sri Sri Radha Govinda Temple", lat: 22.535, lng: 88.365 },
+            { name: "Mahabodhi Society Temple", lat: 22.556, lng: 88.363 },
+            { name: "Nipponzan Myohoji Buddhist Temple", lat: 22.549, lng: 88.368 },
+            { name: "Sea Ip Church", lat: 22.572, lng: 88.352 },
+            { name: "Toong On Church", lat: 22.572, lng: 88.352 },
+            { name: "Armenian Church of the Holy Nazareth", lat: 22.579, lng: 88.349 },
+            { name: "Maghen David Synagogue", lat: 22.572, lng: 88.35 },
+            { name: "Beth El Synagogue", lat: 22.5715, lng: 88.3495 },
+            { name: "Greek Orthodox Church", lat: 22.574, lng: 88.346 },
+            { name: "Cathedral of the Most Holy Rosary", lat: 22.582, lng: 88.343 },
+            { name: "St. Andrew's Church", lat: 22.573, lng: 88.35 },
+            { name: "St. Xavier's Church", lat: 22.556, lng: 88.354 },
+            { name: "Moghul Mosque", lat: 22.585, lng: 88.355 },
+            { name: "Scottish Cemetery", lat: 22.568, lng: 88.366 },
+            { name: "Lower Circular Road Cemetery", lat: 22.539, lng: 88.355 },
+            { name: "Jewish Cemetery Narkeldanga", lat: 22.585, lng: 88.385 },
+            { name: "Maidan", lat: 22.5453, lng: 88.3438 },
+            { name: "Central Park Salt Lake", lat: 22.58, lng: 88.423 },
+            { name: "Elliot Park", lat: 22.548, lng: 88.352 },
+            { name: "Citizen's Park", lat: 22.499, lng: 88.363 },
+            { name: "Curzon Park", lat: 22.562, lng: 88.35 },
+            { name: "Subhash Sarobar", lat: 22.585, lng: 88.375 },
+            { name: "Agri Horticultural Society of India", lat: 22.535, lng: 88.34 },
+            { name: "Chintamoni Kar Bird Sanctuary", lat: 22.44, lng: 88.4 },
+            { name: "Nalban Boating Complex", lat: 22.575, lng: 88.418 },
+            { name: "Safari Park", lat: 22.605, lng: 88.465 },
+            { name: "Deshabandhu Park", lat: 22.524, lng: 88.345 },
+            { name: "Maddox Square", lat: 22.527, lng: 88.363 },
+            { name: "Allen Park", lat: 22.547, lng: 88.354 },
+            { name: "Mohammad Ali Park", lat: 22.572, lng: 88.355 },
+            { name: "College Square", lat: 22.575, lng: 88.364 },
+            { name: "Santragachi Jhel", lat: 22.575, lng: 88.302 },
+            { name: "Rabindra Sadan", lat: 22.5395, lng: 88.3505 },
+            { name: "Sisir Mancha", lat: 22.548, lng: 88.35 },
+            { name: "Kala Mandir", lat: 22.545, lng: 88.354 },
+            { name: "Gyan Manch", lat: 22.546, lng: 88.352 },
+            { name: "Madhusudan Mancha", lat: 22.544, lng: 88.351 },
+            { name: "Star Theatre", lat: 22.594, lng: 88.369 },
+            { name: "Minerva Theatre", lat: 22.59, lng: 88.365 },
+            { name: "Girish Mancha", lat: 22.59, lng: 88.368 },
+            { name: "Nazrul Tirtha", lat: 22.595, lng: 88.438 },
+            { name: "Satyajit Ray Film and Television Institute", lat: 22.495, lng: 88.395 },
+            { name: "Asiatic Society", lat: 22.567, lng: 88.35 },
+            { name: "Belvedere Estate", lat: 22.535, lng: 88.331 },
+            { name: "Standard Buildings", lat: 22.573, lng: 88.35 },
+            { name: "Metropolitan Building", lat: 22.562, lng: 88.351 },
+            { name: "Dead Letter Office", lat: 22.5735, lng: 88.3495 },
+            { name: "Clive House", lat: 22.572, lng: 88.351 },
+            { name: "Hastings House", lat: 22.53, lng: 88.33 },
+            { name: "Sovabazar Rajbari", lat: 22.596, lng: 88.363 },
+            { name: "Pathuriaghata Rajbari", lat: 22.591, lng: 88.362 },
+            { name: "Marble Palace Zoo", lat: 22.5926, lng: 88.3641 },
+            { name: "James Prinsep Monument", lat: 22.5556, lng: 88.3384 },
+            { name: "Lascar War Memorial", lat: 22.556, lng: 88.339 },
+            { name: "Vidyasagar Setu", lat: 22.549, lng: 88.335 },
+            { name: "Vivekananda Setu", lat: 22.635, lng: 88.36 },
+            { name: "Nivedita Setu", lat: 22.64, lng: 88.37 },
+            { name: "Babu Ghat", lat: 22.557, lng: 88.341 },
+            { name: "Outram Ghat", lat: 22.561, lng: 88.342 },
+            { name: "Fairlie Ghat", lat: 22.576, lng: 88.34 },
+            { name: "Armenian Ghat", lat: 22.581, lng: 88.342 },
+            { name: "Ahiritola Ghat", lat: 22.596, lng: 88.356 },
+            { name: "Bagbazar Ghat", lat: 22.601, lng: 88.362 },
+            { name: "Nimtala Ghat", lat: 22.6, lng: 88.36 },
+            { name: "Takta Ghat", lat: 22.585, lng: 88.345 },
+            { name: "Kudghat", lat: 22.49, lng: 88.356 },
+            { name: "Royal Calcutta Golf Club", lat: 22.517, lng: 88.363 },
+            { name: "Royal Calcutta Turf Club", lat: 22.547, lng: 88.34 },
+            { name: "Calcutta Cricket and Football Club", lat: 22.515, lng: 88.36 },
+            { name: "Netaji Indoor Stadium", lat: 22.548, lng: 88.347 },
+            { name: "Kolkata Rowing Club", lat: 22.51, lng: 88.358 },
+            { name: "Mohun Bagan Ground", lat: 22.554, lng: 88.342 },
+            { name: "East Bengal Ground", lat: 22.553, lng: 88.34 },
+            { name: "Mohammedan Sporting Ground", lat: 22.5545, lng: 88.341 },
+            { name: "University of Calcutta", lat: 22.575, lng: 88.365 },
+            { name: "Jadavpur University", lat: 22.499, lng: 88.3712 },
+            { name: "Presidency University", lat: 22.576, lng: 88.363 },
+            { name: "St. Xavier's College", lat: 22.556, lng: 88.354 },
+            { name: "Scottish Church College", lat: 22.579, lng: 88.366 },
+            { name: "Bethune College", lat: 22.59, lng: 88.368 },
+            { name: "Loreto College", lat: 22.549, lng: 88.352 },
+            { name: "Indian Statistical Institute", lat: 22.66, lng: 88.376 },
+            { name: "Bose Institute", lat: 22.578, lng: 88.363 },
+            { name: "Saha Institute of Nuclear Physics", lat: 22.58, lng: 88.403 },
+            { name: "Marine Engineering and Research Institute", lat: 22.545, lng: 88.32 },
+            { name: "Medical College and Hospital Kolkata", lat: 22.585, lng: 88.354 },
+            { name: "IPGMER and SSKM Hospital", lat: 22.539, lng: 88.343 },
+            { name: "R G Kar Medical College", lat: 22.5975, lng: 88.3746 },
+            { name: "National Medical College", lat: 22.578, lng: 88.363 },
+            { name: "Nil Ratan Sircar Medical College", lat: 22.567, lng: 88.361 },
+            { name: "Lal Bazar Police Headquarters", lat: 22.573, lng: 88.351 },
+            { name: "Salt Lake Central Park Mela Ground", lat: 22.58, lng: 88.423 },
+            { name: "Milan Mela Ground", lat: 22.575, lng: 88.408 },
+            { name: "Nazrul Manch", lat: 22.53, lng: 88.363 },
+            { name: "Uttam Mancha", lat: 22.528, lng: 88.348 },
+            { name: "Sarat Sadan", lat: 22.472, lng: 88.35 },
+            { name: "Phanibhusan Vidya Binod Jatra Mancha", lat: 22.59, lng: 88.37 },
+            { name: "Sukanta Sadan", lat: 22.58, lng: 88.372 },
+            { name: "Rabindra Okakura Bhavan", lat: 22.546, lng: 88.34 },
+            { name: "Kolkata Museum of Modern Art", lat: 22.575, lng: 88.467 },
+            { name: "Ghose Grapes Garden", lat: 22.61, lng: 88.39 },
+            { name: "Gitanjali Stadium", lat: 22.47, lng: 88.365 },
+            { name: "Kishore Bharati Krirangan", lat: 22.495, lng: 88.36 },
+            { name: "Rabindra Sarobar Stadium", lat: 22.509, lng: 88.36 },
+            { name: "East Bengal Club Tent", lat: 22.509, lng: 88.361 },
+            { name: "Mohun Bagan Club Tent", lat: 22.5085, lng: 88.3605 },
+            { name: "Press Club Kolkata", lat: 22.562, lng: 88.351 },
+            { name: "Bengal Club", lat: 22.547, lng: 88.351 },
+            { name: "Calcutta Club", lat: 22.546, lng: 88.35 },
+            { name: "Tollygunge Club", lat: 22.501, lng: 88.348 },
+            { name: "Saturday Club", lat: 22.545, lng: 88.354 },
+            { name: "Outram Club", lat: 22.554, lng: 88.342 },
+            { name: "Ordnance Club", lat: 22.555, lng: 88.343 },
+            { name: "Calcutta Swimming Club", lat: 22.546, lng: 88.353 },
+            { name: "Bow Barracks", lat: 22.5615, lng: 88.3555 },
+            { name: "Galstaun Mansions", lat: 22.549, lng: 88.352 },
+            { name: "Stephen Court", lat: 22.5525, lng: 88.3527 },
+            { name: "Chowringhee Mansions", lat: 22.556, lng: 88.352 }
         ];
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -471,6 +739,51 @@
                 );
             });
             // ---------- End real-world map ----------
+
+            // ---------- Live Line Status panel ----------
+            const liveLineStatusGrid = document.getElementById('liveLineStatusGrid');
+            const liveStatusClock = document.getElementById('liveStatusClock');
+            const lineOrder = ['blue', 'green', 'orange', 'purple', 'yellow'];
+
+            function statusBadge(result) {
+                if (!result) return { label: 'Unknown', cls: 'bg-gray-600/30 text-gray-300 border-gray-500/40' };
+                switch (result.status) {
+                    case 'closed':
+                        return { label: `Closed today (${result.dayName})`, cls: 'bg-red-500/10 text-red-300 border-red-500/30' };
+                    case 'before-first':
+                        return { label: `Not started yet · First train ${to12Hour(result.entry.first)}`, cls: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30' };
+                    case 'after-last':
+                        return { label: `Service ended · Last train ${to12Hour(result.entry.last)}${result.entry.lastNote ? ' · ' + result.entry.lastNote : ''}`, cls: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30' };
+                    case 'available':
+                        return { label: `Metro Available · Last train ${to12Hour(result.entry.last)}`, cls: 'bg-green-500/10 text-green-300 border-green-500/30' };
+                    default:
+                        return { label: 'Status unavailable', cls: 'bg-gray-600/30 text-gray-300 border-gray-500/40' };
+                }
+            }
+
+            function renderLiveLineStatus() {
+                const now = new Date();
+                liveStatusClock.textContent = `As of your local time — ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} · ${now.toLocaleDateString('en-IN', { weekday: 'long' })}`;
+                liveLineStatusGrid.innerHTML = '';
+                lineOrder.forEach(lineKey => {
+                    const meta = metroData[lineKey];
+                    const result = computeLineStatus(lineKey, now);
+                    const badge = statusBadge(result);
+                    const card = document.createElement('div');
+                    card.className = `rounded-lg border p-3 ${badge.cls}`;
+                    card.innerHTML = `
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="w-2.5 h-2.5 rounded-full inline-block" style="background:${meta.color}"></span>
+                            <span class="text-sm font-semibold text-white">${lineTimetables[lineKey].name}</span>
+                        </div>
+                        <div class="text-xs leading-snug">${badge.label}</div>`;
+                    liveLineStatusGrid.appendChild(card);
+                });
+            }
+
+            renderLiveLineStatus();
+            setInterval(renderLiveLineStatus, 30000);
+            // ---------- End Live Line Status panel ----------
 
             const createSuggestions = (input, suggestionsContainer, noteEl) => {
                 const query = input.value.toLowerCase();
@@ -639,63 +952,42 @@
                 let journeyHtml = `<h3 class="text-xl font-semibold mb-3 text-white">Your Journey Simplified</h3>`;
                 let journeyParts = [];
 
-                // --- SERVICE ALERT SECTION ---
+                // --- SERVICE ALERT SECTION (direction + day-type aware, using the user's local device time) ---
                 const now = new Date();
-                const currentDay = now.toLocaleString('en-US', { weekday: 'long' });
-                const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
                 let serviceAlertHtml = '';
-                
-                const linesInRoute = new Set();
-                for (let i = 0; i < route.length - 1; i++) {
-                    const line = getLineForSegment(route[i], route[i+1]);
-                    if (line) {
-                        linesInRoute.add(line.name.toLowerCase().replace(' line', ''));
+
+                // Break the route into contiguous per-line segments so each
+                // segment can be checked against the correct direction's timetable.
+                let journeyLineSegments = [];
+                let curSeg = { line: getLineForSegment(route[0], route[1]), stations: [route[0]] };
+                for (let i = 1; i < route.length; i++) {
+                    const segLine = getLineForSegment(route[i - 1], route[i]);
+                    if (segLine === curSeg.line) {
+                        curSeg.stations.push(route[i]);
+                    } else {
+                        journeyLineSegments.push(curSeg);
+                        curSeg = { line: segLine, stations: [route[i - 1], route[i]] };
                     }
                 }
-                
-                linesInRoute.forEach(lineKey => {
-                    const timetable = lineTimetables[lineKey];
-                    if (timetable) {
-                        // Pick the correct schedule for today: Sunday > Saturday > weekdays
-                        let schedule;
-                        if (currentDay === 'Sunday' && timetable.sundays) {
-                            schedule = timetable.sundays;
-                        } else if (currentDay === 'Saturday' && timetable.saturdays) {
-                            schedule = timetable.saturdays;
-                        } else if (timetable.weekdays) {
-                            schedule = timetable.weekdays;
-                        } else {
-                            schedule = timetable;
-                        }
+                journeyLineSegments.push(curSeg);
 
-                        if (timetable.closedOn.includes(currentDay)) {
-                             serviceAlertHtml += `<div class="bg-red-500/10 border border-red-500/30 p-3 rounded-lg mb-2 text-red-300"><strong>Service Alert:</strong> The ${timetable.name} is suspended on ${currentDay}s.</div>`;
-                        } else {
-                            // Find the direction of travel on this line
-                            const routeStationsOnLine = route.filter(id => metroData[lineKey].stations.some(s => s.id === id));
-                            if (routeStationsOnLine.length > 0) {
-                                const lineStationIds = metroData[lineKey].stations.map(s => s.id);
-                                
-                                let travelStartPoint = startStation.id;
-                                if (!lineStationIds.includes(travelStartPoint)) {
-                                    travelStartPoint = routeStationsOnLine[0];
-                                }
-                                
-                                const firstTrainTime = schedule.firstTrain[travelStartPoint];
-                                const lastTrainTime = schedule.lastTrain[travelStartPoint];
-                                const lastTrainNote = timetable.note ? ` (${timetable.note})` : '';
+                journeyLineSegments.forEach(seg => {
+                    if (!seg.line) return;
+                    const lineKey = Object.keys(metroData).find(k => metroData[k] === seg.line);
+                    if (!lineKey || !lineTimetables[lineKey]) return;
+                    const segStartId = seg.stations[0];
+                    const segEndId = seg.stations[seg.stations.length - 1];
+                    const result = computeLineStatus(lineKey, now, segStartId, segEndId);
+                    if (!result) return;
 
-                                if (firstTrainTime && lastTrainTime) {
-                                    if (currentTime < firstTrainTime) {
-                                        serviceAlertHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-2 text-yellow-300"><strong>Timing Alert:</strong> The first train on the ${timetable.name} from your direction starts at ${firstTrainTime}.</div>`;
-                                    } else if (currentTime > lastTrainTime) {
-                                        serviceAlertHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-2 text-yellow-300"><strong>Timing Alert:</strong> The last train on the ${timetable.name} from your direction may have departed at ${lastTrainTime}${lastTrainNote}.</div>`;
-                                    } else {
-                                        serviceAlertHtml += `<div class="bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-2 text-green-300"><strong>Metro Available:</strong> The ${timetable.name} is currently running (service window ${firstTrainTime} – ${lastTrainTime}).</div>`;
-                                    }
-                                }
-                            }
-                        }
+                    if (result.status === 'closed') {
+                        serviceAlertHtml += `<div class="bg-red-500/10 border border-red-500/30 p-3 rounded-lg mb-2 text-red-300"><strong>Service Alert:</strong> The ${result.lineName} does not run on ${result.dayName}s.</div>`;
+                    } else if (result.status === 'before-first') {
+                        serviceAlertHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-2 text-yellow-300"><strong>Timing Alert:</strong> The ${result.lineName} hasn't started for the day yet on this stretch — first train departs at ${to12Hour(result.entry.first)}.</div>`;
+                    } else if (result.status === 'after-last') {
+                        serviceAlertHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-2 text-yellow-300"><strong>Timing Alert:</strong> Service on the ${result.lineName} for this stretch has ended — last train was at ${to12Hour(result.entry.last)}${result.entry.lastNote ? ' (' + result.entry.lastNote + ')' : ''}.</div>`;
+                    } else if (result.status === 'available') {
+                        serviceAlertHtml += `<div class="bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-2 text-green-300"><strong>Metro Available:</strong> ${result.lineName} is running now (last train ${to12Hour(result.entry.last)}${result.entry.lastNote ? ', ' + result.entry.lastNote : ''}).</div>`;
                     }
                 });
                 journeyHtml += serviceAlertHtml;
@@ -808,6 +1100,22 @@
                         <div class="mt-4 text-center bg-indigo-950/60 p-4 rounded-lg border border-purple-800/50">
                             <h4 class="text-lg font-semibold mb-1 text-purple-300">Estimated Fare</h4>
                             <p class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">₹ ${totalFare.toFixed(2)}</p>
+                            <div class="mt-4 pt-4 border-t border-purple-800/40 flex flex-col items-center gap-2">
+                                <div class="flex items-center gap-2 text-sm text-gray-300">
+                                    <svg class="w-5 h-5 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M3 9a2 2 0 012-2h14a2 2 0 012 2v1.5a1.5 1.5 0 000 3V15a2 2 0 01-2 2H5a2 2 0 01-2-2v-1.5a1.5 1.5 0 000-3V9z" /></svg>
+                                    <span>Book your ticket in the official app</span>
+                                </div>
+                                <div class="flex items-center gap-3 flex-wrap justify-center">
+                                    <a href="https://play.google.com/store/apps/details?id=org.cris.kmmts&hl=en_IN" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-indigo-900/70 hover:bg-indigo-800/80 border border-purple-700/50 text-gray-200 text-sm font-medium py-2 px-3 rounded-lg transition-colors">
+                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3.6v16.8c0 .5.3.9.7 1.1l9.7-9.5L3.7 2.5c-.4.2-.7.6-.7 1.1zM17.6 9.6L14.9 8 5.2 2.5l8.8 8.6 3.6-1.5zM5.2 21.5L14.9 16l2.7-1.6-3.6-3.5-8.8 8.6zM19.6 10.4L18 11.3v1.4l1.6.9c.9-.5 1.4-1.1 1.4-1.8s-.5-1.3-1.4-1.4z"/></svg>
+                                        Google Play
+                                    </a>
+                                    <a href="https://apps.apple.com/in/app/aamar-kolkata-metro/id6469577611" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-indigo-900/70 hover:bg-indigo-800/80 border border-purple-700/50 text-gray-200 text-sm font-medium py-2 px-3 rounded-lg transition-colors">
+                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8.94-.19 1.83-.87 3.14-.79 1.57.13 2.75.74 3.52 1.85-3.13 1.87-2.54 5.98.47 7.2-.55 1.42-1.27 2.83-2.21 3.91zM12.03 7.25c-.15-2.23 1.66-4.09 3.74-4.25.29 2.32-2.09 4.13-3.74 4.25z"/></svg>
+                                        App Store
+                                    </a>
+                                </div>
+                            </div>
                         </div>`;
                 }
                 journeyHtml += fareInfoHtml;
