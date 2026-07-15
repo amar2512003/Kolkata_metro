@@ -26,6 +26,9 @@
         .view-toggle-btn { transition: all 0.2s ease; }
         .view-toggle-btn.active { background: linear-gradient(to right, #9333ea, #db2777); color: white; }
         .view-toggle-btn:not(.active) { background: rgba(30, 27, 75, 0.6); color: #a5b4fc; }
+        .lang-btn { transition: all 0.2s ease; }
+        .lang-btn.active { background: linear-gradient(to right, #9333ea, #db2777); color: white; }
+        .lang-btn:not(.active) { background: rgba(30, 27, 75, 0.6); color: #a5b4fc; }
         .metro-user-marker {
             background: #22d3ee; border: 2px solid white; border-radius: 50%;
             width: 14px; height: 14px; box-shadow: 0 0 8px 2px rgba(34, 211, 238, 0.8);
@@ -172,8 +175,8 @@
         <div class="intro-stars"></div>
 
         <div class="relative z-10 flex flex-col items-center">
-            <h2 class="intro-title-anim text-3xl md:text-4xl font-bold text-white tracking-tight text-center px-4">Kolkata Metro Guide</h2>
-            <p class="intro-subtitle-anim text-purple-300 mt-2 text-sm md:text-base text-center px-4">Charting your next journey across the city...</p>
+            <h2 class="intro-title-anim text-3xl md:text-4xl font-bold text-white tracking-tight text-center px-4" data-i18n="appTitle">Kolkata Metro Guide</h2>
+            <p class="intro-subtitle-anim text-purple-300 mt-2 text-sm md:text-base text-center px-4" data-i18n="introSubtitle">Charting your next journey across the city...</p>
         </div>
 
         <div class="intro-track-wrap mt-8 relative z-10">
@@ -234,10 +237,18 @@
 
     <div id="main-content" class="hidden">
         <div class="container mx-auto p-4 md:p-6 min-h-screen flex flex-col items-center">
+            <!-- Language Switcher -->
+            <div class="w-full max-w-5xl flex justify-end mb-3">
+                <div class="glass-card rounded-lg p-1 flex gap-1">
+                    <button class="lang-btn text-sm font-semibold py-1.5 px-3 rounded-md" data-lang="en">English</button>
+                    <button class="lang-btn text-sm font-semibold py-1.5 px-3 rounded-md" data-lang="bn">বাংলা</button>
+                    <button class="lang-btn text-sm font-semibold py-1.5 px-3 rounded-md" data-lang="hi">हिन्दी</button>
+                </div>
+            </div>
             <!-- Header -->
             <header class="w-full max-w-5xl text-center mb-6 md:mb-8">
                 <div class="flex items-center justify-center gap-3">
-                    <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">Kolkata Metro Guide</h1>
+                    <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight" data-i18n="appTitle">Kolkata Metro Guide</h1>
                 </div>
             </header>
     
@@ -251,8 +262,8 @@
                                  <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                             </div>
                             <div class="w-full">
-                                <label for="startStation" class="block text-xs font-medium text-gray-400">STARTING FROM</label>
-                                <input type="text" id="startStation" placeholder="Search station or landmark..." class="w-full bg-transparent text-white text-lg font-medium focus:outline-none" autocomplete="off">
+                                <label for="startStation" class="block text-xs font-medium text-gray-400" data-i18n="startingFrom">STARTING FROM</label>
+                                <input type="text" id="startStation" data-i18n-placeholder="searchPlaceholder" placeholder="Search station or landmark..." class="w-full bg-transparent text-white text-lg font-medium focus:outline-none" autocomplete="off">
                             </div>
                         </div>
                         <div id="startLandmarkNote" class="hidden text-xs text-cyan-400 mt-1 pl-1"></div>
@@ -265,8 +276,8 @@
                                 <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
                             </div>
                             <div class="w-full">
-                                <label for="endStation" class="block text-xs font-medium text-gray-400">DESTINATION</label>
-                                 <input type="text" id="endStation" placeholder="Search station or landmark..." class="w-full bg-transparent text-white text-lg font-medium focus:outline-none" autocomplete="off">
+                                <label for="endStation" class="block text-xs font-medium text-gray-400" data-i18n="destination">DESTINATION</label>
+                                 <input type="text" id="endStation" data-i18n-placeholder="searchPlaceholder" placeholder="Search station or landmark..." class="w-full bg-transparent text-white text-lg font-medium focus:outline-none" autocomplete="off">
                             </div>
                         </div>
                         <div id="endLandmarkNote" class="hidden text-xs text-cyan-400 mt-1 pl-1"></div>
@@ -276,7 +287,7 @@
                  <!-- Find Route Button -->
                 <div class="mt-6">
                     <button id="findRouteBtn" class="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3.5 px-4 rounded-lg focus:outline-none focus:ring-4 focus:ring-purple-400/50 transform hover:scale-[1.02] transition-all duration-300">
-                        <span>Show Route</span>
+                        <span data-i18n="showRoute">Show Route</span>
                          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                     </button>
                 </div>
@@ -285,7 +296,7 @@
             <!-- Live Line Status -->
             <div class="glass-card rounded-xl p-5 w-full max-w-5xl mb-8">
                 <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
-                    <h3 class="text-lg font-semibold text-white">Live Line Status</h3>
+                    <h3 class="text-lg font-semibold text-white" data-i18n="liveLineStatus">Live Line Status</h3>
                     <span id="liveStatusClock" class="text-xs text-gray-400"></span>
                 </div>
                 <div id="liveLineStatusGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3"></div>
@@ -296,7 +307,7 @@
                 <div class="flex items-center justify-end gap-3 mb-3 px-1 flex-wrap">
                     <button id="locateMeBtn" class="view-toggle-btn text-sm font-semibold py-2 px-4 rounded-lg flex items-center gap-2">
                         <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
-                        Find Nearest Station
+                        <span data-i18n="findNearestStation">Find Nearest Station</span>
                     </button>
                 </div>
                 <div id="nearestStationResult" class="hidden text-sm text-center bg-indigo-950/60 border border-purple-800/50 rounded-lg p-3 mb-3 text-cyan-300"></div>
@@ -306,13 +317,206 @@
                 </div>
                 <!-- Route details text -->
                 <div id="routeDetails" class="mt-2 text-center p-2">
-                    <p class="text-gray-400 text-lg">Select your journey to see the route plan.</p>
+                    <p class="text-gray-400 text-lg" data-i18n="selectJourney">Select your journey to see the route plan.</p>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // =========================================================
+        // i18n — translation dictionary + helpers
+        // =========================================================
+        const translations = {
+            en: {
+                appTitle: "Kolkata Metro Guide",
+                introSubtitle: "Charting your next journey across the city...",
+                startingFrom: "STARTING FROM",
+                destination: "DESTINATION",
+                searchPlaceholder: "Search station or landmark...",
+                showRoute: "Show Route",
+                liveLineStatus: "Live Line Status",
+                findNearestStation: "Find Nearest Station",
+                selectJourney: "Select your journey to see the route plan.",
+                locating: "Locating you...",
+                geoNotSupported: "Geolocation is not supported by your browser.",
+                nearestStationLabel: "Nearest station:",
+                approxAway: "approx. {d} km away.",
+                couldNotDetermine: "Couldn't determine a nearest station.",
+                couldNotGetLocation: "Could not get your location. Please allow location access and try again.",
+                noRouteFound: "No route found between the selected stations.",
+                pleaseSelectValid: "Please select valid start and end stations from the suggestions.",
+                sameStation: "Start and end stations cannot be the same.",
+                yourJourneySimplified: "Your Journey Simplified",
+                board: "Board the",
+                from: "from",
+                travelTo: "Travel to",
+                takeAutoRide: "Take an auto ride to",
+                toBoard: "to board the",
+                exitAndTakeBus: "Exit and take a bus to",
+                atStation: "At",
+                changeToThe: "change to the",
+                continueToDestination: "Continue to your destination,",
+                serviceAlert: "Service Alert:",
+                doesNotRunOn: "does not run on",
+                onDaySuffix: "s.",
+                timingAlert: "Timing Alert:",
+                hasntStarted: "hasn't started for the day yet on this stretch — first train departs at",
+                serviceEndedLabel: "Service on the",
+                forThisStretchEnded: "for this stretch has ended — last train was at",
+                metroAvailableLabel: "Metro Available:",
+                isRunningNow: "is running now (last train",
+                maintenanceAlert: "Maintenance Alert:",
+                interchangeClosed: "Interchange at Kavi Subhash is closed. An alternative route is suggested.",
+                estimatedFare: "Estimated Fare",
+                bookTicketApp: "Book your ticket in the official app",
+                gateInformation: "Gate Information",
+                startLabel: "Start",
+                destinationLabelShort: "Destination",
+                gateLabel: "Gate",
+                asOfLocalTime: "As of your local time —",
+                closedTodayLabel: "Closed today",
+                notStartedYetShort: "Not started yet · First train",
+                serviceEndedShort: "Service ended · Last train",
+                metroAvailableShort: "Metro Available · Last train",
+                statusUnavailable: "Status unavailable",
+                unknownLabel: "Unknown",
+                youAreHere: "You are here",
+                mapFailed: "Map library failed to load — check your internet connection or that leaflet CDN scripts aren't blocked, then refresh."
+            },
+            bn: {
+                appTitle: "কলকাতা মেট্রো গাইড",
+                introSubtitle: "শহর জুড়ে আপনার পরবর্তী যাত্রা পরিকল্পনা করা হচ্ছে...",
+                startingFrom: "যাত্রা শুরু",
+                destination: "গন্তব্য",
+                searchPlaceholder: "স্টেশন বা ল্যান্ডমার্ক খুঁজুন...",
+                showRoute: "রুট দেখুন",
+                liveLineStatus: "লাইভ লাইন স্ট্যাটাস",
+                findNearestStation: "নিকটতম স্টেশন খুঁজুন",
+                selectJourney: "রুট পরিকল্পনা দেখতে আপনার যাত্রা নির্বাচন করুন।",
+                locating: "আপনার অবস্থান খোঁজা হচ্ছে...",
+                geoNotSupported: "আপনার ব্রাউজারে জিওলোকেশন সমর্থিত নয়।",
+                nearestStationLabel: "নিকটতম স্টেশন:",
+                approxAway: "আনুমানিক {d} কিমি দূরে।",
+                couldNotDetermine: "নিকটতম স্টেশন নির্ধারণ করা যায়নি।",
+                couldNotGetLocation: "আপনার অবস্থান পাওয়া যায়নি। অনুগ্রহ করে লোকেশন অ্যাক্সেস অনুমতি দিন এবং আবার চেষ্টা করুন।",
+                noRouteFound: "নির্বাচিত স্টেশনগুলির মধ্যে কোনো রুট পাওয়া যায়নি।",
+                pleaseSelectValid: "অনুগ্রহ করে পরামর্শ থেকে বৈধ শুরু ও শেষ স্টেশন নির্বাচন করুন।",
+                sameStation: "শুরু এবং শেষ স্টেশন একই হতে পারে না।",
+                yourJourneySimplified: "আপনার যাত্রা সহজভাবে",
+                board: "উঠুন",
+                from: "থেকে",
+                travelTo: "যাত্রা করুন",
+                takeAutoRide: "অটোতে যান",
+                toBoard: "উঠতে",
+                exitAndTakeBus: "বের হয়ে বাসে যান",
+                atStation: "এ",
+                changeToThe: "পরিবর্তন করুন",
+                continueToDestination: "আপনার গন্তব্যের দিকে এগিয়ে যান,",
+                serviceAlert: "পরিষেবা সতর্কতা:",
+                doesNotRunOn: "চলে না",
+                onDaySuffix: "।",
+                timingAlert: "সময় সতর্কতা:",
+                hasntStarted: "এই অংশে আজকের জন্য এখনও শুরু হয়নি — প্রথম ট্রেন ছাড়বে",
+                serviceEndedLabel: "এর পরিষেবা",
+                forThisStretchEnded: "এই অংশে শেষ হয়ে গেছে — শেষ ট্রেন ছিল",
+                metroAvailableLabel: "মেট্রো উপলব্ধ:",
+                isRunningNow: "এখন চলছে (শেষ ট্রেন",
+                maintenanceAlert: "রক্ষণাবেক্ষণ সতর্কতা:",
+                interchangeClosed: "কবি সুভাষ ইন্টারচেঞ্জ বন্ধ আছে। একটি বিকল্প রুট প্রস্তাবিত।",
+                estimatedFare: "আনুমানিক ভাড়া",
+                bookTicketApp: "অফিসিয়াল অ্যাপে আপনার টিকিট বুক করুন",
+                gateInformation: "গেট তথ্য",
+                startLabel: "শুরু",
+                destinationLabelShort: "গন্তব্য",
+                gateLabel: "গেট",
+                asOfLocalTime: "আপনার স্থানীয় সময় অনুযায়ী —",
+                closedTodayLabel: "আজ বন্ধ",
+                notStartedYetShort: "এখনও শুরু হয়নি · প্রথম ট্রেন",
+                serviceEndedShort: "পরিষেবা শেষ · শেষ ট্রেন",
+                metroAvailableShort: "মেট্রো উপলব্ধ · শেষ ট্রেন",
+                statusUnavailable: "স্ট্যাটাস অনুপলব্ধ",
+                unknownLabel: "অজানা",
+                youAreHere: "আপনি এখানে আছেন",
+                mapFailed: "ম্যাপ লাইব্রেরি লোড করতে ব্যর্থ হয়েছে — আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন অথবা রিফ্রেশ করুন।"
+            },
+            hi: {
+                appTitle: "कोलकाता मेट्रो गाइड",
+                introSubtitle: "शहर भर में आपकी अगली यात्रा की योजना बनाई जा रही है...",
+                startingFrom: "यात्रा शुरू",
+                destination: "गंतव्य",
+                searchPlaceholder: "स्टेशन या लैंडमार्क खोजें...",
+                showRoute: "रूट दिखाएं",
+                liveLineStatus: "लाइव लाइन स्थिति",
+                findNearestStation: "निकटतम स्टेशन खोजें",
+                selectJourney: "रूट प्लान देखने के लिए अपनी यात्रा चुनें।",
+                locating: "आपका स्थान खोजा जा रहा है...",
+                geoNotSupported: "आपके ब्राउज़र में जियोलोकेशन समर्थित नहीं है।",
+                nearestStationLabel: "निकटतम स्टेशन:",
+                approxAway: "लगभग {d} किमी दूर।",
+                couldNotDetermine: "निकटतम स्टेशन निर्धारित नहीं किया जा सका।",
+                couldNotGetLocation: "आपका स्थान प्राप्त नहीं हो सका। कृपया लोकेशन एक्सेस की अनुमति दें और पुनः प्रयास करें।",
+                noRouteFound: "चयनित स्टेशनों के बीच कोई रूट नहीं मिला।",
+                pleaseSelectValid: "कृपया सुझावों में से मान्य प्रारंभ और गंतव्य स्टेशन चुनें।",
+                sameStation: "प्रारंभ और गंतव्य स्टेशन समान नहीं हो सकते।",
+                yourJourneySimplified: "आपकी यात्रा सरल रूप में",
+                board: "चढ़ें",
+                from: "से",
+                travelTo: "यात्रा करें",
+                takeAutoRide: "ऑटो में जाएं",
+                toBoard: "चढ़ने के लिए",
+                exitAndTakeBus: "बाहर निकलें और बस लें",
+                atStation: "पर",
+                changeToThe: "बदलें",
+                continueToDestination: "अपने गंतव्य की ओर बढ़ें,",
+                serviceAlert: "सेवा चेतावनी:",
+                doesNotRunOn: "नहीं चलती",
+                onDaySuffix: "।",
+                timingAlert: "समय चेतावनी:",
+                hasntStarted: "इस हिस्से में आज के लिए अभी शुरू नहीं हुई है — पहली ट्रेन रवाना होगी",
+                serviceEndedLabel: "की सेवा",
+                forThisStretchEnded: "इस हिस्से में समाप्त हो गई है — आखिरी ट्रेन थी",
+                metroAvailableLabel: "मेट्रो उपलब्ध:",
+                isRunningNow: "अभी चल रही है (आखिरी ट्रेन",
+                maintenanceAlert: "रखरखाव चेतावनी:",
+                interchangeClosed: "कवि सुभाष इंटरचेंज बंद है। एक वैकल्पिक रूट सुझाया गया है।",
+                estimatedFare: "अनुमानित किराया",
+                bookTicketApp: "आधिकारिक ऐप में अपना टिकट बुक करें",
+                gateInformation: "गेट जानकारी",
+                startLabel: "प्रारंभ",
+                destinationLabelShort: "गंतव्य",
+                gateLabel: "गेट",
+                asOfLocalTime: "आपके स्थानीय समय के अनुसार —",
+                closedTodayLabel: "आज बंद",
+                notStartedYetShort: "अभी शुरू नहीं हुई · पहली ट्रेन",
+                serviceEndedShort: "सेवा समाप्त · आखिरी ट्रेन",
+                metroAvailableShort: "मेट्रो उपलब्ध · आखिरी ट्रेन",
+                statusUnavailable: "स्थिति अनुपलब्ध",
+                unknownLabel: "अज्ञात",
+                youAreHere: "आप यहां हैं",
+                mapFailed: "मैप लाइब्रेरी लोड नहीं हो सकी — अपना इंटरनेट कनेक्शन जांचें या रीफ्रेश करें।"
+            }
+        };
+
+        let currentLang = localStorage && false ? 'en' : (window.__metroLang || 'en');
+        function t(key) {
+            return (translations[currentLang] && translations[currentLang][key]) || translations.en[key] || key;
+        }
+
+        function applyStaticTranslations() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = t(key);
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                el.setAttribute('placeholder', t(key));
+            });
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === currentLang);
+            });
+        }
+
         window.addEventListener('load', () => {
             const introScreen = document.getElementById('intro-screen');
             const mainContent = document.getElementById('main-content');
@@ -773,6 +977,20 @@
         ];
 
         document.addEventListener('DOMContentLoaded', () => {
+            applyStaticTranslations();
+
+            const langBtns = document.querySelectorAll('.lang-btn');
+            langBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentLang = btn.dataset.lang;
+                    applyStaticTranslations();
+                    renderLiveLineStatus();
+                    if (currentRoute && currentRoute.length > 1) {
+                        displayRouteDetails(currentRoute);
+                    }
+                });
+            });
+
             const startStationInput = document.getElementById('startStation');
             const endStationInput = document.getElementById('endStation');
             const startSuggestions = document.getElementById('startSuggestions');
@@ -818,7 +1036,7 @@
             function initRealMap() {
                 if (leafletMap) return; // already initialized
                 if (typeof L === 'undefined') {
-                    realMapContainer.innerHTML = '<div class="text-center text-red-400 p-6">Map library failed to load — check your internet connection or that leaflet CDN scripts aren\'t blocked, then refresh.</div>';
+                    realMapContainer.innerHTML = `<div class="text-center text-red-400 p-6">${t('mapFailed')}</div>`;
                     return;
                 }
                 leafletMap = L.map('realMap', { scrollWheelZoom: true }).setView([22.56, 88.38], 11);
@@ -894,26 +1112,26 @@
             locateMeBtn.addEventListener('click', () => {
                 if (!navigator.geolocation) {
                     nearestStationResult.classList.remove('hidden');
-                    nearestStationResult.textContent = 'Geolocation is not supported by your browser.';
+                    nearestStationResult.textContent = t('geoNotSupported');
                     return;
                 }
                 nearestStationResult.classList.remove('hidden');
-                nearestStationResult.textContent = 'Locating you...';
+                nearestStationResult.textContent = t('locating');
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
                         const { latitude, longitude } = pos.coords;
                         const { station, distanceKm } = findNearestStation(latitude, longitude);
                         if (!station) {
-                            nearestStationResult.textContent = "Couldn't determine a nearest station.";
+                            nearestStationResult.textContent = t('couldNotDetermine');
                             return;
                         }
-                        nearestStationResult.innerHTML = `Nearest station: <b class="text-white">${station.name}</b> — approx. ${distanceKm.toFixed(1)} km away.`;
+                        nearestStationResult.innerHTML = `${t('nearestStationLabel')} <b class="text-white">${station.name}</b> — ${t('approxAway').replace('{d}', distanceKm.toFixed(1))}`;
 
                         if (leafletMap) {
                             if (leafletLayers.userMarker) leafletMap.removeLayer(leafletLayers.userMarker);
                             leafletLayers.userMarker = L.marker([latitude, longitude], {
                                 icon: L.divIcon({ className: 'metro-user-marker', iconSize: [14, 14] })
-                            }).addTo(leafletMap).bindPopup('You are here').openPopup();
+                            }).addTo(leafletMap).bindPopup(t('youAreHere')).openPopup();
 
                             const stationGeoLoc = stationGeo[station.id];
                             if (stationGeoLoc) {
@@ -923,7 +1141,7 @@
                         }
                     },
                     (err) => {
-                        nearestStationResult.textContent = 'Could not get your location. Please allow location access and try again.';
+                        nearestStationResult.textContent = t('couldNotGetLocation');
                     },
                     { enableHighAccuracy: true, timeout: 10000 }
                 );
@@ -936,24 +1154,24 @@
             const lineOrder = ['blue', 'green', 'orange', 'purple', 'yellow'];
 
             function statusBadge(result) {
-                if (!result) return { label: 'Unknown', cls: 'bg-gray-600/30 text-gray-300 border-gray-500/40' };
+                if (!result) return { label: t('unknownLabel'), cls: 'bg-gray-600/30 text-gray-300 border-gray-500/40' };
                 switch (result.status) {
                     case 'closed':
-                        return { label: `Closed today (${result.dayName})`, cls: 'bg-red-500/10 text-red-300 border-red-500/30' };
+                        return { label: `${t('closedTodayLabel')} (${result.dayName})`, cls: 'bg-red-500/10 text-red-300 border-red-500/30' };
                     case 'before-first':
-                        return { label: `Not started yet · First train ${to12Hour(result.entry.first)}`, cls: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30' };
+                        return { label: `${t('notStartedYetShort')} ${to12Hour(result.entry.first)}`, cls: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30' };
                     case 'after-last':
-                        return { label: `Service ended · Last train ${to12Hour(result.entry.last)}${result.entry.lastNote ? ' · ' + result.entry.lastNote : ''}`, cls: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30' };
+                        return { label: `${t('serviceEndedShort')} ${to12Hour(result.entry.last)}${result.entry.lastNote ? ' · ' + result.entry.lastNote : ''}`, cls: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30' };
                     case 'available':
-                        return { label: `Metro Available · Last train ${to12Hour(result.entry.last)}`, cls: 'bg-green-500/10 text-green-300 border-green-500/30' };
+                        return { label: `${t('metroAvailableShort')} ${to12Hour(result.entry.last)}`, cls: 'bg-green-500/10 text-green-300 border-green-500/30' };
                     default:
-                        return { label: 'Status unavailable', cls: 'bg-gray-600/30 text-gray-300 border-gray-500/40' };
+                        return { label: t('statusUnavailable'), cls: 'bg-gray-600/30 text-gray-300 border-gray-500/40' };
                 }
             }
 
             function renderLiveLineStatus() {
                 const now = new Date();
-                liveStatusClock.textContent = `As of your local time — ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} · ${now.toLocaleDateString('en-IN', { weekday: 'long' })}`;
+                liveStatusClock.textContent = `${t('asOfLocalTime')} ${now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} · ${now.toLocaleDateString('en-IN', { weekday: 'long' })}`;
                 liveLineStatusGrid.innerHTML = '';
                 lineOrder.forEach(lineKey => {
                     const meta = metroData[lineKey];
@@ -1005,13 +1223,13 @@
                         const div = document.createElement('div');
                         div.className = 'p-3 hover:bg-indigo-800/60 cursor-pointer border-t border-purple-900/40';
                         div.innerHTML = `<div class="flex items-center gap-2 text-gray-100"><span>📍</span><span>${lm.name}</span></div>` +
-                            (station ? `<div class="text-xs text-cyan-400 pl-6 mt-0.5">→ nearest station: ${station.name} (${distanceKm.toFixed(1)} km)</div>` : `<div class="text-xs text-gray-500 pl-6 mt-0.5">No nearby station found</div>`);
+                            (station ? `<div class="text-xs text-cyan-400 pl-6 mt-0.5">→ ${station.name} (${distanceKm.toFixed(1)} km)</div>` : `<div class="text-xs text-gray-500 pl-6 mt-0.5">No nearby station found</div>`);
                         div.addEventListener('click', () => {
                             if (!station) return;
                             input.value = lm.name;
                             input.dataset.stationId = station.id;
                             if (noteEl) {
-                                noteEl.textContent = `📍 Resolved to ${station.name} — approx. ${distanceKm.toFixed(1)} km away`;
+                                noteEl.textContent = `📍 ${station.name} — ${t('approxAway').replace('{d}', distanceKm.toFixed(1))}`;
                                 noteEl.classList.remove('hidden');
                             }
                             suggestionsContainer.classList.add('hidden');
@@ -1039,11 +1257,11 @@
                 const endId = endStationInput.dataset.stationId;
                 
                 if (!startId || !endId) {
-                    alert('Please select valid start and end stations from the suggestions.');
+                    alert(t('pleaseSelectValid'));
                     return;
                 }
                 if (startId === endId) {
-                    alert('Start and end stations cannot be the same.');
+                    alert(t('sameStation'));
                     return;
                 }
                 currentRoute = findShortestRoute(startId, endId);
@@ -1054,7 +1272,7 @@
                     if (leafletMap) highlightRouteOnRealMap(currentRoute);
                 } else {
                     routeDetailsDiv.style.display = 'block';
-                    routeDetailsDiv.innerHTML = `<p class="text-red-400 font-semibold">No route found between the selected stations.</p>`;
+                    routeDetailsDiv.innerHTML = `<p class="text-red-400 font-semibold">${t('noRouteFound')}</p>`;
                 }
             });
 
@@ -1139,7 +1357,7 @@
                 if (!route || route.length < 2) return;
                 const startStation = stationMap.get(route[0]);
                 const endStation = stationMap.get(route[route.length - 1]);
-                let journeyHtml = `<h3 class="text-xl font-semibold mb-3 text-white">Your Journey Simplified</h3>`;
+                let journeyHtml = `<h3 class="text-xl font-semibold mb-3 text-white">${t('yourJourneySimplified')}</h3>`;
                 let journeyParts = [];
 
                 // --- SERVICE ALERT SECTION (direction + day-type aware, using the user's local device time) ---
@@ -1171,13 +1389,13 @@
                     if (!result) return;
 
                     if (result.status === 'closed') {
-                        serviceAlertHtml += `<div class="bg-red-500/10 border border-red-500/30 p-3 rounded-lg mb-2 text-red-300"><strong>Service Alert:</strong> The ${result.lineName} does not run on ${result.dayName}s.</div>`;
+                        serviceAlertHtml += `<div class="bg-red-500/10 border border-red-500/30 p-3 rounded-lg mb-2 text-red-300"><strong>${t('serviceAlert')}</strong> ${t('serviceEndedLabel')} ${result.lineName} ${t('doesNotRunOn')} ${result.dayName}${t('onDaySuffix')}</div>`;
                     } else if (result.status === 'before-first') {
-                        serviceAlertHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-2 text-yellow-300"><strong>Timing Alert:</strong> The ${result.lineName} hasn't started for the day yet on this stretch — first train departs at ${to12Hour(result.entry.first)}.</div>`;
+                        serviceAlertHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-2 text-yellow-300"><strong>${t('timingAlert')}</strong> ${result.lineName} ${t('hasntStarted')} ${to12Hour(result.entry.first)}.</div>`;
                     } else if (result.status === 'after-last') {
-                        serviceAlertHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-2 text-yellow-300"><strong>Timing Alert:</strong> Service on the ${result.lineName} for this stretch has ended — last train was at ${to12Hour(result.entry.last)}${result.entry.lastNote ? ' (' + result.entry.lastNote + ')' : ''}.</div>`;
+                        serviceAlertHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-2 text-yellow-300"><strong>${t('timingAlert')}</strong> ${t('serviceEndedLabel')} ${result.lineName} ${t('forThisStretchEnded')} ${to12Hour(result.entry.last)}${result.entry.lastNote ? ' (' + result.entry.lastNote + ')' : ''}.</div>`;
                     } else if (result.status === 'available') {
-                        serviceAlertHtml += `<div class="bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-2 text-green-300"><strong>Metro Available:</strong> ${result.lineName} is running now (last train ${to12Hour(result.entry.last)}${result.entry.lastNote ? ', ' + result.entry.lastNote : ''}).</div>`;
+                        serviceAlertHtml += `<div class="bg-green-500/10 border border-green-500/30 p-3 rounded-lg mb-2 text-green-300"><strong>${t('metroAvailableLabel')}</strong> ${result.lineName} ${t('isRunningNow')} ${to12Hour(result.entry.last)}${result.entry.lastNote ? ', ' + result.entry.lastNote : ''}).</div>`;
                     }
                 });
                 journeyHtml += serviceAlertHtml;
@@ -1187,34 +1405,34 @@
                 let involvesMaintenance = route.some((id, i) => i < route.length -1 && ((id === 'shahid_khudiram' && route[i+1] === 'satyajit_ray') || (id === 'satyajit_ray' && route[i+1] === 'shahid_khudiram')));
                 if (involvesMaintenance) {
                     journeyHtml += `<div class="bg-yellow-500/10 border border-yellow-500/30 p-3 rounded-lg mb-4 text-left md:text-center">
-                        <p class="text-yellow-300"><strong class="font-bold">Maintenance Alert:</strong> Interchange at Kavi Subhash is closed. An alternative route is suggested.</p>
+                        <p class="text-yellow-300"><strong class="font-bold">${t('maintenanceAlert')}</strong> ${t('interchangeClosed')}</p>
                     </div>`;
                 }
                 const firstSegmentLine = getLineForSegment(route[0], route[1]);
                 if (firstSegmentLine) {
-                     const part = `Board the <strong style="color:${firstSegmentLine.color};">${firstSegmentLine.name}</strong> from <strong>${startStation.name}</strong>.`;
+                     const part = `${t('board')} <strong style="color:${firstSegmentLine.color};">${firstSegmentLine.name}</strong> ${t('from')} <strong>${startStation.name}</strong>.`;
                      journeyParts.push(part);
                 }
                 for (let i = 1; i < route.length - 1; i++) {
                     const prevStationId = route[i-1], currentStationId = route[i], nextStationId = route[i+1];
                     if ((currentStationId === 'kalighat' && nextStationId === 'taratala') || (currentStationId === 'taratala' && nextStationId === 'kalighat')) {
                         const nextMetroLine = getLineForSegment(nextStationId, route[i + 2]);
-                        let part1 = `Travel to <strong>${stationMap.get(currentStationId).name}</strong>.`;
+                        let part1 = `${t('travelTo')} <strong>${stationMap.get(currentStationId).name}</strong>.`;
                         journeyParts.push(part1);
                         
-                        let part2 = `<span class="text-yellow-400 font-semibold">Take an auto ride to ${stationMap.get(nextStationId).name}</span> to board the <strong style="color:${nextMetroLine.color};">${nextMetroLine.name}</strong>.`;
+                        let part2 = `<span class="text-yellow-400 font-semibold">${t('takeAutoRide')} ${stationMap.get(nextStationId).name}</span> ${t('toBoard')} <strong style="color:${nextMetroLine.color};">${nextMetroLine.name}</strong>.`;
                         journeyParts.push(part2);
                         i++;
                         continue;
                     }
                     if ((currentStationId === 'shahid_khudiram' && nextStationId === 'satyajit_ray') || (currentStationId === 'satyajit_ray' && nextStationId === 'shahid_khudiram')) {
                         const nextMetroLine = getLineForSegment(nextStationId, route[i + 2]);
-                        let nextLineInfo = nextMetroLine ? ` to board the <strong style="color:${nextMetroLine.color};">${nextMetroLine.name}</strong>` : '';
+                        let nextLineInfo = nextMetroLine ? ` ${t('toBoard')} <strong style="color:${nextMetroLine.color};">${nextMetroLine.name}</strong>` : '';
                         
-                        let part1 = `Travel to <strong>${stationMap.get(currentStationId).name}</strong>.`;
+                        let part1 = `${t('travelTo')} <strong>${stationMap.get(currentStationId).name}</strong>.`;
                         journeyParts.push(part1);
 
-                        let part2 = `<span class="text-yellow-400 font-semibold">Exit and take a bus to ${stationMap.get(nextStationId).name}</span>${nextLineInfo}.`;
+                        let part2 = `<span class="text-yellow-400 font-semibold">${t('exitAndTakeBus')} ${stationMap.get(nextStationId).name}</span>${nextLineInfo}.`;
                         journeyParts.push(part2);
                         i++;
                         continue;
@@ -1222,11 +1440,11 @@
                     const prevSegmentLine = getLineForSegment(prevStationId, currentStationId);
                     const nextSegmentLine = getLineForSegment(currentStationId, nextStationId);
                     if (prevSegmentLine && nextSegmentLine && prevSegmentLine.name !== nextSegmentLine.name) {
-                        const part = `At <strong>${stationMap.get(currentStationId).name}</strong>, change to the <strong style="color:${nextSegmentLine.color};">${nextSegmentLine.name}</strong>.`;
+                        const part = `${t('atStation')} <strong>${stationMap.get(currentStationId).name}</strong>, ${t('changeToThe')} <strong style="color:${nextSegmentLine.color};">${nextSegmentLine.name}</strong>.`;
                         journeyParts.push(part);
                     }
                 }
-                const lastPart = `Continue to your destination, <strong>${endStation.name}</strong>.`;
+                const lastPart = `${t('continueToDestination')} <strong>${endStation.name}</strong>.`;
                 journeyParts.push(lastPart);
                 
                 // Add Journey Details
@@ -1288,12 +1506,12 @@
                 if (fareCalculated && totalFare >= 0) {
                      fareInfoHtml = `
                         <div class="mt-4 text-center bg-indigo-950/60 p-4 rounded-lg border border-purple-800/50">
-                            <h4 class="text-lg font-semibold mb-1 text-purple-300">Estimated Fare</h4>
+                            <h4 class="text-lg font-semibold mb-1 text-purple-300">${t('estimatedFare')}</h4>
                             <p class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">₹ ${totalFare.toFixed(2)}</p>
                             <div class="mt-4 pt-4 border-t border-purple-800/40 flex flex-col items-center gap-2">
                                 <div class="flex items-center gap-2 text-sm text-gray-300">
                                     <svg class="w-5 h-5 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h.01M15 12h.01M3 9a2 2 0 012-2h14a2 2 0 012 2v1.5a1.5 1.5 0 000 3V15a2 2 0 01-2 2H5a2 2 0 01-2-2v-1.5a1.5 1.5 0 000-3V9z" /></svg>
-                                    <span>Book your ticket in the official app</span>
+                                    <span>${t('bookTicketApp')}</span>
                                 </div>
                                 <div class="flex items-center gap-3 flex-wrap justify-center">
                                     <a href="https://play.google.com/store/apps/details?id=org.cris.kmmts&hl=en_IN" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 bg-indigo-900/70 hover:bg-indigo-800/80 border border-purple-700/50 text-gray-200 text-sm font-medium py-2 px-3 rounded-lg transition-colors">
@@ -1316,20 +1534,20 @@
                 let gateInfoHtml = '';
                 if (startStation.gates || endStation.gates) {
                     gateInfoHtml += `<div class="mt-4 text-left bg-indigo-950/60 p-4 rounded-lg border border-purple-800/50">`;
-                    gateInfoHtml += `<h4 class="text-lg font-semibold mb-2 text-purple-300">Gate Information</h4>`;
+                    gateInfoHtml += `<h4 class="text-lg font-semibold mb-2 text-purple-300">${t('gateInformation')}</h4>`;
 
                     if (startStation.gates) {
-                        gateInfoHtml += `<div class="mb-2"><strong class="text-purple-400">${startStation.name} (Start):</strong><ul class="list-disc list-inside text-gray-400 text-sm pl-2">`;
+                        gateInfoHtml += `<div class="mb-2"><strong class="text-purple-400">${startStation.name} (${t('startLabel')}):</strong><ul class="list-disc list-inside text-gray-400 text-sm pl-2">`;
                         for (const gateNum in startStation.gates) {
-                            gateInfoHtml += `<li>Gate ${gateNum}: ${startStation.gates[gateNum]}</li>`;
+                            gateInfoHtml += `<li>${t('gateLabel')} ${gateNum}: ${startStation.gates[gateNum]}</li>`;
                         }
                         gateInfoHtml += `</ul></div>`;
                     }
 
                     if (endStation.gates) {
-                        gateInfoHtml += `<div><strong class="text-pink-400">${endStation.name} (Destination):</strong><ul class="list-disc list-inside text-gray-400 text-sm pl-2">`;
+                        gateInfoHtml += `<div><strong class="text-pink-400">${endStation.name} (${t('destinationLabelShort')}):</strong><ul class="list-disc list-inside text-gray-400 text-sm pl-2">`;
                         for (const gateNum in endStation.gates) {
-                            gateInfoHtml += `<li>Gate ${gateNum}: ${endStation.gates[gateNum]}</li>`;
+                            gateInfoHtml += `<li>${t('gateLabel')} ${gateNum}: ${endStation.gates[gateNum]}</li>`;
                         }
                         gateInfoHtml += `</ul></div>`;
                     }
